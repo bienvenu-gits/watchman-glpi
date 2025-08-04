@@ -24,6 +24,13 @@
 │   │   ├── apiconnector.class.php  # Connecteur API abstrait
 │   │   ├── apiclient.class.php     # Client API spécialisé
 │   │   └── apiexception.class.php  # Exceptions API
+│   ├── /models/                       # Couche Model
+│   │   ├── cvemodel.class.php      # Model CVE
+│   │   ├── alertmodel.class.php    # Model Alert
+│   │   ├── ticketmodel.class.php   # Model Ticket CVE
+│   │   ├── computermodel.class.php # Model Computer étendu
+│   │   ├── softwaremodel.class.php # Model Software étendu
+│   │   └── configmodel.class.php
 │   ├── /services/                  # Services métier
 │   │   ├── syncservice.class.php   # Synchronisation Computer/Software
 │   │   ├── cveservice.class.php    # Logique métier CVE
