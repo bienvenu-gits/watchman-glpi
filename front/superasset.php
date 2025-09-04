@@ -1,8 +1,8 @@
 <?php
 
 use GlpiPlugin\Watchman\Superasset;
-use Search;
-use Html;
+// use Search;
+// use Html;
 
 include ('../../../inc/includes.php');
 

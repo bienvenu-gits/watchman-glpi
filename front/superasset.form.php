@@ -1,7 +1,7 @@
 <?php
 
 use GlpiPlugin\Watchman\Superasset;
-use Html;
+// use Html;
 
 include ('../../../inc/includes.php');
 

@@ -1,0 +1,63 @@
+{# Template de base pour plugin GLPI - sans structure HTML complète #}
+{# Ce template s'intègre dans la structure HTML existante de GLPI #}
+
+{# css general  #}
+<link rel="stylesheet" type="text/css" href="{{ base_url }}/plugins/watchman/assets/css/icons.css">
+<link rel="stylesheet" type="text/css" href="{{ base_url }}/plugins/watchman/assets/css/tailwind.css">
+<link rel="stylesheet" type="text/css" href="{{ base_url }}/plugins/watchman/assets/css/cms_watchman.css">
+
+{# CSS spécifique au plugin #}
+{% block plugin_styles %}
+
+{% endblock %}
+
+<div class="plugin-container">
+    {# Navbar du plugin #}
+    {% block navbar %}
+        {% include '@watchman/components/navbar.html.twig' %}
+    {% endblock %}
+
+    <div data-layout-mode="light" class="cms_watchman">
+
+    
+
+    <div class="cms_watchman_container cms_watchman_page_content" >
+        <div class="cms_watchman_card cms_watchman_content_main">
+            <div class="cms_watchman_content_main_header">
+                <h1>Alertes</h1>
+            </div>
+            <!-- Loading  -->
+            <div class="cms_watchman_content_loading">
+                <span class="cms_watchman_loading"></span>
+            </div>
+            <!-- empty element  -->
+            <div class="cms_watchman_content_empty">
+                <h1 class="heading">Aucun element</h1>
+                <p class="description">No vulnerabilities have been found on your site yet</p>
+            </div>
+            <!-- main  -->
+            <div class="cms_watchman_content_main_body hidden">
+                <!-- statistiques -->
+               {% block content %}{% endblock %}
+            </div>
+        </div>
+    </div>
+</div>
+    
+    
+    
+    
+    {# Footer optionnel #}
+    {% block footer %}
+        {% include '@watchman/components/footer.html.twig' %}
+    {% endblock %}
+</div>
+
+{# JavaScript spécifique au plugin #}
+{% block plugin_scripts %}
+<script>
+$(document).ready(function() {
+    console.log('Plugin {{ plugin_name|default("Watchman") }} initialisé');
+});
+</script>
+{% endblock %}

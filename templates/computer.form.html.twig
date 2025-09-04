@@ -1,0 +1,17 @@
+<!-- Carte principale -->
+<div class="card mb-4">
+	<div
+		class="card-body" style="min-height: 300px;">
+		<!-- Bouton d'exécution -->
+		<form method="post" action="">
+			<input type="hidden" name="_glpi_csrf_token" value="{{ csrf_token }}">
+			<div class="d-flex justify-content-center align-items-center my-4">
+				<button class="btn btn-primary gap-4" name="cron_start" type="submit">
+					<i class="fas fa-play-circle"></i>
+					Exécuter la Tâche Cron Maintenant
+				</button>
+			</div>
+		</form>
+	</div>
+
+</div>

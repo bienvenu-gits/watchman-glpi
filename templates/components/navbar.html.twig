@@ -1,0 +1,35 @@
+<nav class="border-gray-200 bg-white px-2.5 py-2.5 shadow-sm dark:bg-slate-800 sm:px-4 block print:hidden sticky">
+	<div class="container mx-0 flex max-w-full flex-wrap items-center lg:mx-auto">
+		<div class="flex items-center">
+			<a href="?page=cms_watchman" class="flex items-center outline-none">
+				<img src="{{ base_url }}/plugins/watchman/assets/images/cms_watchman/og.png" alt="" class="ml-2 block md:hidden" style="height:30px ;"/>
+				<img src="{{ base_url }}/plugins/watchman/assets/images/cms_watchman/logo_watchman_light.png" alt="" class="ml-2 hidden md:block" style="height:30px ;"/>
+			</a>
+		</div>
+		<div class="order-2 hidden w-full items-center justify-between md:order-1 md:ml-5 md:flex md:w-auto" id="mobile-menu-2">
+			<ul class="font-body mt-4 flex flex-col font-medium md:mt-0 md:flex-row md:text-sm md:font-medium space-x-0 md:space-x-4 lg:space-x-6 xl:space-x-8 navbar">
+
+				<li class="cms_watchman_nav-link">
+					<a href="{{ base_url }}/plugins/watchman/front/computermanager.form.php" class="flex w-full items-center border-b border-gray-800 py-2 px-3 font-medium md:border-0 md:p-0">
+						<i class="mdi mdi-buffer mr-1 text-lg"></i>
+						Actifs
+					</a>
+				</li>
+				<li class="cms_watchman_nav-link">
+					<a href="{{ base_url }}/plugins/watchman/front/alertmanager.php" class="flex w-full items-center border-b border-gray-800 py-2 px-3 font-medium md:border-0 md:p-0">
+						<i class="fas fa-info-circle mr-1 text-lg"></i>
+						Alertes
+					</a>
+				</li>
+			</ul>
+		</div>
+		<div class="order-1 ml-auto flex items-center md:order-2">
+			<div class="mr-2 lg:mr-0 dropdown relative">
+				<div class="cms_watchman_nav-link">
+					<a href="{{ base_url }}/plugins/watchman/front/watchmanconfig.form.php" class="flex w-full items-center border-b border-gray-800 py-2 px-3 font-medium md:border-0 md:p-0">
+						<i class="fas fa-cog mr-1 text-lg"></i>
+						Paramètres
+					</a>
+				</div>
+			</div>
+		</nav>

@@ -1,0 +1,186 @@
+{# Template de base pour plugin GLPI - sans structure HTML complète #}
+{# Ce template s'intègre dans la structure HTML existante de GLPI #}
+
+{# CSS spécifique au plugin #}
+	{% block plugin_styles %}
+	<link rel="stylesheet" type="text/css" href="{{ base_url }}/plugins/watchman/assets/css/icons.css"> <link rel="stylesheet" type="text/css" href="{{ base_url }}/plugins/watchman/assets/css/tailwind.css">
+	<link rel="stylesheet" type="text/css" href="{{ base_url }}/plugins/watchman/assets/css/cms_watchman.css">
+{% endblock %}
+
+<div
+	class="plugin-container">
+	{# Navbar du plugin #}
+	{% block navbar %}
+		{% include '@watchman/components/navbar.html.twig' %}
+	{% endblock %}
+
+	<div data-layout-mode="light" class="cms_watchman">
+		<div class="cms_watchman_container cms_watchman_page_content">
+			<div class="cms_watchman_card cms_watchman_content_main">
+				<div class="cms_watchman_content_main_header">
+					<h1>Alertes</h1>
+				</div>
+				<!-- Loading  -->
+				<div class="cms_watchman_content_loading hidden">
+					<span class="cms_watchman_loading"></span>
+				</div>
+				<!-- empty element  -->
+				<div class="cms_watchman_content_empty hidden">
+					<h1 class="heading">Aucun element</h1>
+					<p class="description">No vulnerabilities have been found on your site yet</p>
+				</div>
+				<!-- main  -->
+				<div
+					class="cms_watchman_content_main_body hidden">
+					<!-- statistiques -->
+					{% block content %}
+						<div
+							class="cms_watchman_alert_statistic_row">
+							<!-- alert card  -->
+							<div class="cms_watchman_alert_statistic_card" style="background: linear-gradient(90deg, #02AAB0 0%, #00B295 100%); margin-left:0px;">
+								<div class="cms_watchman_alert_statistic_card_text">
+									<h1 class="cms_watchman_alert_statistic_card_text_heading">Aujourd'hui</h1>
+									<h2 class="cms_watchman_alert_statistic_card_text_value" id="cms_watchman_alert_statistic_today_value">0</h2>
+								</div>
+								<div class="cms_watchman_alert_statistic_card_icon">
+									<div class="cms_watchman_alert_statistic_card_iconbox">
+										<i class="fas fa-clock"></i>
+									</div>
+								</div>
+							</div>
+							<!-- end card  -->
+
+							<!-- alert card  -->
+							<div class="cms_watchman_alert_statistic_card" style="background: linear-gradient(90.27deg, #00B295 -60.62%, #FABB18 179.06%);">
+								<div class="cms_watchman_alert_statistic_card_text">
+									<h1 class="cms_watchman_alert_statistic_card_text_heading">Total</h1>
+									<h2 class="cms_watchman_alert_statistic_card_text_value" id="cms_watchman_alert_statistic_total_value">0</h2>
+								</div>
+								<div class="cms_watchman_alert_statistic_card_icon">
+									<div class="cms_watchman_alert_statistic_card_iconbox">
+										<i class="far fa-chart-bar"></i>
+									</div>
+								</div>
+							</div>
+							<!-- end card  -->
+
+							<!-- alert card  -->
+							<div class="cms_watchman_alert_statistic_card" style="background: linear-gradient(270.1deg, #3686F7 -0.34%, #00B295 100.17%);">
+								<div class="cms_watchman_alert_statistic_card_text">
+									<h1 class="cms_watchman_alert_statistic_card_text_heading">Ce week</h1>
+									<h2 class="cms_watchman_alert_statistic_card_text_value" id="cms_watchman_alert_statistic_this_week_value">0</h2>
+								</div>
+								<div class="cms_watchman_alert_statistic_card_icon">
+									<div class="cms_watchman_alert_statistic_card_iconbox">
+										<i class="far fa-calendar-check"></i>
+									</div>
+								</div>
+							</div>
+							<!-- end card  -->
+
+							<!-- alert card  -->
+							<div class="cms_watchman_alert_statistic_card" style="background: linear-gradient(90.27deg, #00B295 -60.62%, #FABB18 179.06%);">
+								<div class="cms_watchman_alert_statistic_card_text">
+									<h1 class="cms_watchman_alert_statistic_card_text_heading"><?php esc_html_e('Patched', 'cms-watchman'); ?></h1>
+									<h2 class="cms_watchman_alert_statistic_card_text_value" id="cms_watchman_alert_statistic_patched_value">0</h2>
+								</div>
+								<div class="cms_watchman_alert_statistic_card_icon">
+									<div class="cms_watchman_alert_statistic_card_iconbox">
+										<i class="fas fa-check-circle"></i>
+									</div>
+								</div>
+							</div>
+							<!-- end card  -->
+						</div>
+
+						<!-- alert table  -->
+						<!-- Filter Container -->
+						<div class="cms_watchman_filter_container">
+							<div class="cms_watchman_input_group">
+								<i class="fa fa-search"></i>
+								<input class="cms_watchman_input" type="text" id="cms_watchman_search_alert_input_text" placeholder="<?php esc_attr_e('Search by name', 'cms-watchman'); ?>"/>
+							</div>
+							<select class="cms_watchman_select" id="cms_watchman_search_alert_input_patch">
+								<option value=""><?php esc_html_e('Search by patch', 'cms-watchman'); ?></option>
+								<option value="1"><?php esc_html_e('Patched', 'cms-watchman'); ?></option>
+								<option value="0"><?php esc_html_e('Not Patched', 'cms-watchman'); ?></option>
+							</select>
+							<select class="cms_watchman_select" id="cms_watchman_search_alert_input_severity">
+								<option value=""><?php esc_html_e('Severity?', 'cms-watchman'); ?></option>
+								<option value="CRITICAL"><?php esc_html_e('Critical', 'cms-watchman'); ?></option>
+								<option value="HIGH"><?php esc_html_e('High', 'cms-watchman'); ?></option>
+								<option value="MEDIUM"><?php esc_html_e('Medium', 'cms-watchman'); ?></option>
+								<option value="LOW"><?php esc_html_e('Low', 'cms-watchman'); ?></option>
+							</select>
+							<div class="cms_watchman_input_group">
+								<i class="fa fa-calendar"></i>
+								<input class="cms_watchman_input" autocomplete="off" id="cms_watchman__search_alert_date_range" type="text" placeholder="<?php esc_attr_e('Filter by date', 'cms-watchman'); ?>"/>
+							</div>
+							<button class="cms_watchman_btn" id="cms_watchman_search_alert_btn">
+								<span>
+									<i class="fa fa-search"></i>
+								</span>
+							</button>
+							<button class="cms_watchman_btn cms_watchman_btn-outline" id="cms_watchman_reset_search_alert_btn">
+								<i class="mdi mdi-replay"></i>
+							</button>
+						</div>
+
+						<div class="cms_watchman_table_container">
+							<table class="cms_watchman_table" id="cms_watchman_alerts_table">
+								<thead>
+									<tr>
+										<th width="5%">
+											<input type="checkbox" id="select-all" onchange="toggleAllAlerts()">
+										</th>
+										<th width="15%">{{ __('CVE', 'watchman') }}</th>
+										<th width="25%">{{ __('Titre', 'watchman') }}</th>
+										<th width="10%">{{ __('Score', 'watchman') }}</th>
+										<th width="10%">{{ __('Sévérité', 'watchman') }}</th>
+										<th width="10%">{{ __('Statut', 'watchman') }}</th>
+										<th width="10%">{{ __('Ticket', 'watchman') }}</th>
+										<th width="10%">{{ __('Date', 'watchman') }}</th>
+										<th width="5%">{{ __('Actions', 'watchman') }}</th>
+									</tr>
+								</thead>
+								<tbody></tbody>
+							</table>
+						</div>
+
+						<div class="cms_watchman_pagination_container" id="cms_watchman_pagination_alerts">
+							<div class="cms_watchman_pagination_total">
+								Total
+							</div>
+							<div class="cms_watchman_pagination_display">
+								<button class="cms_watchman_pagination_preview_button cms_watchman_btn cms_watchman_btn-primary">
+									<i class="fa fa-chevron-left"></i>
+								</button>
+								<span class="cms_watchman_pagination_number">1 / 1</span>
+								<button class="cms_watchman_pagination_next_button cms_watchman_btn cms_watchman_btn-primary">
+									<i class="fa fa-chevron-right"></i>
+								</button>
+							</div>
+						</div>
+
+					{% endblock %}
+				</div>
+			</div>
+		</div>
+	</div>
+
+
+	{# Footer optionnel #}
+	{% block footer %}
+		{% include '@watchman/components/footer.html.twig' %}
+	{% endblock %}
+</div>
+
+{# JavaScript spécifique au plugin #}
+{% block plugin_scripts %}
+	<script>
+		$(document).ready(function () {
+console.log('Plugin  {{ plugin_name|default("Watchman") }} initialisé');
+});
+	</script>
+    <script src="{{ base_url }}/plugins/watchman/assets/js/alerts.js" ></script>
+{% endblock %}

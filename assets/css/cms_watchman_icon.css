@@ -1,0 +1,14 @@
+@font-face {
+    font-family: "cms_watchmanicon";
+    src: url("../fonts/eicons.eot?5.31.0");
+    src: url("../fonts/eicons.eot?5.31.0#iefix") format("embedded-opentype"), url("../fonts/eicons.woff2?5.31.0") format("woff2"), url("../fonts/eicons.woff?5.31.0") format("woff"), url("../fonts/eicons.ttf?5.31.0") format("truetype"), url("../fonts/eicons.svg?5.31.0#eicon") format("svg");
+    font-weight: normal;
+    font-style: normal;
+  }
+
+#adminmenu #toplevel_page_cms_watchman div.wp-menu-image:before {
+    content: "\e813";
+    /* font-family: cms_watchmanicon; */
+    font-size: 18px;
+    margin-block-start: 1px;
+  }

@@ -18,7 +18,7 @@ class MyObject extends CommonDBTM {
       $params['display'] = false;
 
       $out = '<tr>';
-      $out .= '<th>' . __('My label', 'watchman') . '</th>'
+      $out .= '<th>' . __('My label', 'watchman') . '</th>';
 
       $objectName = autoName(
          $this->fields["name"],

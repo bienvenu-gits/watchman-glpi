@@ -1,0 +1,664 @@
+{#
+ # Template pour l'affichage du détail d'une alerte
+ # @var array alert - Données de l'alerte
+ # @var array cve_details - Détails de la CVE
+ # @var array stack_details - Détails de la stack
+ # @var array alert_logs - Historique des actions
+ # @var array related_alerts - Alertes liées
+ # @var string csrf_token - Token CSRF
+ #}
+
+<div class="watchman-alert-detail">
+    {# En-tête avec navigation #}
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item">
+                        <a href="{{ path('/plugins/watchman/front/alertmanager.php') }}">
+                            <i class="fas fa-exclamation-triangle me-1"></i>{{ __('Alertes', 'watchman') }}
+                        </a>
+                    </li>
+                    <li class="breadcrumb-item active">{{ alert.cves_id }}</li>
+                </ol>
+            </nav>
+        </div>
+        <div class="btn-group">
+            <button class="btn btn-secondary" onclick="history.back()">
+                <i class="fas fa-arrow-left me-1"></i>{{ __('Retour', 'watchman') }}
+            </button>
+            <button class="btn btn-primary" onclick="location.reload()">
+                <i class="fas fa-sync me-1"></i>{{ __('Actualiser', 'watchman') }}
+            </button>
+        </div>
+    </div>
+
+    <div class="row">
+        {# Colonne principale - Informations de l'alerte #}
+        <div class="col-lg-8">
+            {# Carte principale de l'alerte #}
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-start">
+                    <div>
+                        <h4 class="card-title mb-1">
+                            <code class="text-primary me-2">{{ alert.cves_id }}</code>
+                            {% if alert.possible_false %}
+                                <span class="badge bg-warning">
+                                    <i class="fas fa-question-circle me-1"></i>{{ __('Faux positif ?', 'watchman') }}
+                                </span>
+                            {% endif %}
+                        </h4>
+                        <h5 class="text-muted mb-0">{{ alert.title }}</h5>
+                    </div>
+                    <div class="text-end">
+                        {% if alert.score %}
+                            {% set score_class = 'success' %}
+                            {% if alert.score >= 9.0 %}
+                                {% set score_class = 'danger' %}
+                            {% elseif alert.score >= 7.0 %}
+                                {% set score_class = 'warning' %}
+                            {% elseif alert.score >= 4.0 %}
+                                {% set score_class = 'info' %}
+                            {% endif %}
+                            <div class="badge bg-{{ score_class }} fs-5 mb-2">{{ alert.score }}</div>
+                        {% endif %}
+                        
+                        {% if alert.severity %}
+                            {% set severity_class = 'secondary' %}
+                            {% set severity_label = alert.severity %}
+                            
+                            {% if alert.severity == 'CRITICAL' %}
+                                {% set severity_class = 'danger' %}
+                                {% set severity_label = __('Critique', 'watchman') %}
+                            {% elseif alert.severity == 'HIGH' %}
+                                {% set severity_class = 'warning' %}
+                                {% set severity_label = __('Élevée', 'watchman') %}
+                            {% elseif alert.severity == 'MEDIUM' %}
+                                {% set severity_class = 'info' %}
+                                {% set severity_label = __('Moyenne', 'watchman') %}
+                            {% elseif alert.severity == 'LOW' %}
+                                {% set severity_class = 'success' %}
+                                {% set severity_label = __('Faible', 'watchman') %}
+                            {% endif %}
+                            
+                            <div class="badge bg-{{ severity_class }}">{{ severity_label }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="card-body">
+                    {# Statut et actions rapides #}
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <div class="d-flex align-items-center">
+                                {% if alert.patched %}
+                                    <span class="badge bg-success me-2">
+                                        <i class="fas fa-check me-1"></i>{{ __('Corrigée', 'watchman') }}
+                                    </span>
+                                    {% if alert.patched_at %}
+                                        <small class="text-muted">{{ __('le', 'watchman') }} {{ alert.patched_at|date('d/m/Y H:i') }}</small>
+                                    {% endif %}
+                                {% else %}
+                                    <span class="badge bg-warning me-2">
+                                        <i class="fas fa-exclamation me-1"></i>{{ __('En attente', 'watchman') }}
+                                    </span>
+                                    <button class="btn btn-success btn-sm" onclick="markAsPatched('{{ alert.id }}')">
+                                        <i class="fas fa-check me-1"></i>{{ __('Marquer comme corrigée', 'watchman') }}
+                                    </button>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-6 text-end">
+                            <div class="btn-group">
+                                {% if not alert.tickets_id %}
+                                    <button class="btn btn-outline-primary btn-sm" onclick="createTicket('{{ alert.id }}')">
+                                        <i class="fas fa-ticket-alt me-1"></i>{{ __('Créer ticket', 'watchman') }}
+                                    </button>
+                                {% else %}
+                                    <a href="{{ path('front/ticket.form.php') }}?id={{ alert.tickets_id }}" 
+                                       class="btn btn-primary btn-sm" target="_blank">
+                                        <i class="fas fa-external-link-alt me-1"></i>{{ __('Voir ticket', 'watchman') }} #{{ alert.tickets_id }}
+                                    </a>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    {# Description de l'alerte #}
+                    <div class="mb-4">
+                        <h6 class="fw-bold mb-2">{{ __('Description', 'watchman') }}</h6>
+                        <div class="alert alert-light">
+                            {{ alert.description|nl2br }}
+                        </div>
+                    </div>
+
+                    {# Informations sur l'application #}
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6 class="fw-bold mb-2">{{ __('Application concernée', 'watchman') }}</h6>
+                            <table class="table table-sm">
+                                <tr>
+                                    <td class="fw-bold">{{ __('Nom', 'watchman') }}:</td>
+                                    <td>{{ alert.stack_name ?? __('Inconnu', 'watchman') }}</td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold">{{ __('Version', 'watchman') }}:</td>
+                                    <td>{{ alert.stack_version ?? __('Non spécifiée', 'watchman') }}</td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold">{{ __('Type', 'watchman') }}:</td>
+                                    <td>
+                                        {% set type_labels = {
+                                            'app_server': __('Serveur d\'application', 'watchman'),
+                                            'database': __('Base de données', 'watchman'),
+                                            'web_server': __('Serveur web', 'watchman'),
+                                            'os': __('Système d\'exploitation', 'watchman'),
+                                            'library': __('Bibliothèque', 'watchman')
+                                        } %}
+                                        {{ type_labels[alert.stack_type] ?? alert.stack_type ?? __('Inconnu', 'watchman') }}
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <h6 class="fw-bold mb-2">{{ __('Informations de sécurité', 'watchman') }}</h6>
+                            <table class="table table-sm">
+                                {% if alert.attack_vector %}
+                                <tr>
+                                    <td class="fw-bold">{{ __('Vecteur d\'attaque', 'watchman') }}:</td>
+                                    <td>{{ alert.attack_vector }}</td>
+                                </tr>
+                                {% endif %}
+                                {% if alert.attack_complexity %}
+                                <tr>
+                                    <td class="fw-bold">{{ __('Complexité', 'watchman') }}:</td>
+                                    <td>{{ alert.attack_complexity }}</td>
+                                </tr>
+                                {% endif %}
+                                {% if alert.exploitability_score %}
+                                <tr>
+                                    <td class="fw-bold">{{ __('Exploitabilité', 'watchman') }}:</td>
+                                    <td><span class="badge bg-info">{{ alert.exploitability_score }}</span></td>
+                                </tr>
+                                {% endif %}
+                                {% if alert.impact_score %}
+                                <tr>
+                                    <td class="fw-bold">{{ __('Impact', 'watchman') }}:</td>
+                                    <td><span class="badge bg-warning">{{ alert.impact_score }}</span></td>
+                                </tr>
+                                {% endif %}
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {# Détails de la CVE #}
+            {% if cve_details %}
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-shield-alt text-danger me-2"></i>{{ __('Détails de la CVE', 'watchman') }}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <table class="table table-sm">
+                                <tr>
+                                    <td class="fw-bold">{{ __('ID', 'watchman') }}:</td>
+                                    <td><code>{{ cve_details.id }}</code></td>
+                                </tr>
+                                {% if cve_details.assigner %}
+                                <tr>
+                                    <td class="fw-bold">{{ __('Assigné par', 'watchman') }}:</td>
+                                    <td>{{ cve_details.assigner }}</td>
+                                </tr>
+                                {% endif %}
+                                {% if cve_details.published_at %}
+                                <tr>
+                                    <td class="fw-bold">{{ __('Publié le', 'watchman') }}:</td>
+                                    <td>
+                                        {{ cve_details.published_at|date('d/m/Y H:i') }}
+                                        <small class="text-muted">
+                                            ({{ __('il y a', 'watchman') }} {{ ((date().timestamp - cve_details.published_at|date('U')) / 86400)|round }} {{ __('jours', 'watchman') }})
+                                        </small>
+                                    </td>
+                                </tr>
+                                {% endif %}
+                                {% if cve_details.modified_at %}
+                                <tr>
+                                    <td class="fw-bold">{{ __('Modifié le', 'watchman') }}:</td>
+                                    <td>{{ cve_details.modified_at|date('d/m/Y H:i') }}</td>
+                                </tr>
+                                {% endif %}
+                            </table>
+                        </div>
+                    </div>
+
+                    {# Références CVE #}
+                    {% if cve_details.references %}
+                    <div class="mb-3">
+                        <h6 class="fw-bold">{{ __('Références', 'watchman') }}</h6>
+                        <div class="row">
+                            {% for reference in cve_details.references %}
+                            <div class="col-md-6 mb-2">
+                                <a href="{{ reference.url }}" target="_blank" class="btn btn-outline-primary btn-sm w-100 text-start">
+                                    <i class="fas fa-external-link-alt me-2"></i>
+                                    {{ reference.name|slice(0, 50) }}{% if reference.name|length > 50 %}...{% endif %}
+                                </a>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {# Produits affectés #}
+                    {% if cve_details.affected_products %}
+                    <div>
+                        <h6 class="fw-bold">{{ __('Produits affectés', 'watchman') }}</h6>
+                        <div class="table-responsive">
+                            <table class="table table-sm table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>{{ __('Fournisseur', 'watchman') }}</th>
+                                        <th>{{ __('Produit', 'watchman') }}</th>
+                                        <th>{{ __('Version', 'watchman') }}</th>
+                                        <th>{{ __('Plage vulnérable', 'watchman') }}</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for product in cve_details.affected_products %}
+                                    <tr>
+                                        <td>{{ product.vendor ?? '-' }}</td>
+                                        <td>{{ product.name ?? '-' }}</td>
+                                        <td>{{ product.version ?? '-' }}</td>
+                                        <td>
+                                            {% if product.vulnerable_from or product.vulnerable_to %}
+                                                {{ product.vulnerable_from ?? '*' }} - {{ product.vulnerable_to ?? '*' }}
+                                            {% else %}
+                                                -
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+
+            {# Alertes liées #}
+            {% if related_alerts %}
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-link text-info me-2"></i>{{ __('Autres alertes liées à cette CVE', 'watchman') }}
+                        <span class="badge bg-secondary ms-2">{{ related_alerts|length }}</span>
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover">
+                            <thead>
+                                <tr>
+                                    <th>{{ __('Application', 'watchman') }}</th>
+                                    <th>{{ __('Score', 'watchman') }}</th>
+                                    <th>{{ __('Statut', 'watchman') }}</th>
+                                    <th>{{ __('Date', 'watchman') }}</th>
+                                    <th>{{ __('Actions', 'watchman') }}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for related in related_alerts %}
+                                <tr>
+                                    <td>
+                                        <div class="fw-bold">{{ related.stack_name ?? __('Inconnu', 'watchman') }}</div>
+                                        {% if related.stack_version %}
+                                            <small class="text-muted">v{{ related.stack_version }}</small>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-center">
+                                        {% if related.score %}
+                                            {% set score_class = 'success' %}
+                                            {% if related.score >= 7.0 %}
+                                                {% set score_class = 'danger' %}
+                                            {% elseif related.score >= 4.0 %}
+                                                {% set score_class = 'warning' %}
+                                            {% endif %}
+                                            <span class="badge bg-{{ score_class }}">{{ related.score }}</span>
+                                        {% else %}
+                                            -
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-center">
+                                        {% if related.patched %}
+                                            <span class="badge bg-success">
+                                                <i class="fas fa-check me-1"></i>{{ __('Corrigée', 'watchman') }}
+                                            </span>
+                                        {% else %}
+                                            <span class="badge bg-warning">
+                                                <i class="fas fa-exclamation me-1"></i>{{ __('En attente', 'watchman') }}
+                                            </span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ related.date_creation|date('d/m/Y') }}</td>
+                                    <td>
+                                        <a href="{{ path('plugins/watchman/front/alertmanager.php') }}?action=detail&alert_id={{ related.id }}" 
+                                           class="btn btn-outline-primary btn-sm">
+                                            <i class="fas fa-eye me-1"></i>{{ __('Voir', 'watchman') }}
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        {# Colonne latérale - Informations complémentaires #}
+        <div class="col-lg-4">
+            {# Informations générales #}
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6 class="card-title mb-0">
+                        <i class="fas fa-info-circle text-primary me-2"></i>{{ __('Informations', 'watchman') }}
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <table class="table table-sm">
+                        <tr>
+                            <td class="fw-bold">{{ __('Créée le', 'watchman') }}:</td>
+                            <td>{{ alert.date_creation|date('d/m/Y H:i') }}</td>
+                        </tr>
+                        <tr>
+                            <td class="fw-bold">{{ __('Modifiée le', 'watchman') }}:</td>
+                            <td>{{ alert.date_mod|date('d/m/Y H:i') }}</td>
+                        </tr>
+                        {% if alert.patched_at %}
+                        <tr>
+                            <td class="fw-bold">{{ __('Corrigée le', 'watchman') }}:</td>
+                            <td>{{ alert.patched_at|date('d/m/Y H:i') }}</td>
+                        </tr>
+                        {% endif %}
+                    </table>
+                </div>
+            </div>
+
+            {# Notifications #}
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6 class="card-title mb-0">
+                        <i class="fas fa-bell text-warning me-2"></i>{{ __('Notifications', 'watchman') }}
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex flex-column gap-2">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span>{{ __('Intégration', 'watchman') }}</span>
+                            {% if alert.integration_notified %}
+                                <span class="badge bg-success">
+                                    <i class="fas fa-check me-1"></i>{{ __('Envoyée', 'watchman') }}
+                                </span>
+                            {% else %}
+                                <span class="badge bg-secondary">
+                                    <i class="fas fa-times me-1"></i>{{ __('Non envoyée', 'watchman') }}
+                                </span>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span>{{ __('Email', 'watchman') }}</span>
+                            {% if alert.email_notified %}
+                                <span class="badge bg-success">
+                                    <i class="fas fa-check me-1"></i>{{ __('Envoyé', 'watchman') }}
+                                </span>
+                            {% else %}
+                                <span class="badge bg-secondary">
+                                    <i class="fas fa-times me-1"></i>{{ __('Non envoyé', 'watchman') }}
+                                </span>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span>{{ __('Signalée', 'watchman') }}</span>
+                            {% if alert.reported %}
+                                <span class="badge bg-info">
+                                    <i class="fas fa-flag me-1"></i>{{ __('Oui', 'watchman') }}
+                                </span>
+                            {% else %}
+                                <span class="badge bg-secondary">
+                                    <i class="fas fa-times me-1"></i>{{ __('Non', 'watchman') }}
+                                </span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {# Historique des actions #}
+            {% if alert_logs %}
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6 class="card-title mb-0">
+                        <i class="fas fa-history text-info me-2"></i>{{ __('Historique', 'watchman') }}
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="timeline">
+                        {% for log in alert_logs %}
+                        <div class="timeline-item mb-3">
+                            <div class="timeline-marker">
+                                {% if log.action == 'created' %}
+                                    <i class="fas fa-plus text-success"></i>
+                                {% elseif log.action == 'marked_patched' %}
+                                    <i class="fas fa-check text-success"></i>
+                                {% elseif log.action == 'ticket_created' %}
+                                    <i class="fas fa-ticket-alt text-primary"></i>
+                                {% elseif log.action == 'false_positive_toggle' %}
+                                    <i class="fas fa-question-circle text-warning"></i>
+                                {% elseif log.action == 'deleted' %}
+                                    <i class="fas fa-trash text-danger"></i>
+                                {% else %}
+                                    <i class="fas fa-info-circle text-info"></i>
+                                {% endif %}
+                            </div>
+                            <div class="timeline-content">
+                                <div class="fw-bold">{{ log.message }}</div>
+                                <small class="text-muted">
+                                    {{ log.date_formatted }} - {{ log.user_name }}
+                                </small>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            {# Actions rapides #}
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="card-title mb-0">
+                        <i class="fas fa-tools text-secondary me-2"></i>{{ __('Actions rapides', 'watchman') }}
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        {% if not alert.patched %}
+                        <button class="btn btn-success btn-sm" onclick="markAsPatched('{{ alert.id }}')">
+                            <i class="fas fa-check me-2"></i>{{ __('Marquer comme corrigée', 'watchman') }}
+                        </button>
+                        {% endif %}
+                        
+                        {% if not alert.tickets_id %}
+                        <button class="btn btn-primary btn-sm" onclick="createTicket('{{ alert.id }}')">
+                            <i class="fas fa-ticket-alt me-2"></i>{{ __('Créer un ticket', 'watchman') }}
+                        </button>
+                        {% endif %}
+                        
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{# JavaScript pour les actions #}
+<script>
+function markAsPatched(alertId) {
+    if (confirm('{{ __("Marquer cette alerte comme corrigée ?", "watchman") }}')) {
+        performAction('mark-patched', alertId);
+    }
+}
+
+function createTicket(alertId) {
+    if (confirm('{{ __("Créer un ticket GLPI à partir de cette alerte ?", "watchman") }}')) {
+        performAction('create-ticket', alertId);
+    }
+}
+
+function toggleFalsePositive(alertId, isFalsePositive) {
+    const message = isFalsePositive ? 
+        '{{ __("Marquer cette alerte comme faux positif ?", "watchman") }}' : 
+        '{{ __("Retirer le marquage faux positif ?", "watchman") }}';
+        
+    if (confirm(message)) {
+        performAction('toggle-false-positive', alertId, { is_false_positive: isFalsePositive });
+    }
+}
+
+function deleteAlert(alertId) {
+    if (confirm('{{ __("Êtes-vous sûr de vouloir supprimer cette alerte ? Cette action est irréversible.", "watchman") }}')) {
+        performAction('delete', alertId);
+    }
+}
+
+function performAction(action, alertId, params = {}) {
+    const data = {
+        action: action,
+        alert_id: alertId,
+        csrf_token: '{{ csrf_token }}',
+        ...params
+    };
+
+    fetch('{{ path("ajax/watchman.php") }}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (result.success) {
+            // Afficher un message de succès
+            showNotification('success', result.message || '{{ __("Action effectuée avec succès", "watchman") }}');
+            
+            // Rediriger si nécessaire
+            if (action === 'delete') {
+                setTimeout(() => {
+                    window.location.href = '{{ path("front/plugin_watchman_alertmanager.php") }}';
+                }, 1500);
+            } else {
+                // Recharger la page pour voir les changements
+                setTimeout(() => {
+                    location.reload();
+                }, 1000);
+            }
+        } else {
+            showNotification('error', result.message || '{{ __("Erreur lors de l\'exécution de l\'action", "watchman") }}');
+        }
+    })
+    .catch(error => {
+        console.error('Erreur:', error);
+        showNotification('error', '{{ __("Erreur de communication avec le serveur", "watchman") }}');
+    });
+}
+
+function showNotification(type, message) {
+    // Créer une notification temporaire
+    const alertClass = type === 'success' ? 'alert-success' : 'alert-danger';
+    const icon = type === 'success' ? 'fa-check-circle' : 'fa-exclamation-triangle';
+    
+    const notification = document.createElement('div');
+    notification.className = `alert ${alertClass} alert-dismissible fade show position-fixed`;
+    notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+    notification.innerHTML = `
+        <i class="fas ${icon} me-2"></i>${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    document.body.appendChild(notification);
+    
+    // Supprimer automatiquement après 5 secondes
+    setTimeout(() => {
+        if (notification.parentNode) {
+            notification.parentNode.removeChild(notification);
+        }
+    }, 5000);
+}
+</script>
+
+{# Styles CSS pour la timeline #}
+<style>
+.timeline {
+    position: relative;
+}
+
+.timeline-item {
+    display: flex;
+    align-items-flex-start;
+    position: relative;
+}
+
+.timeline-marker {
+    flex-shrink: 0;
+    width: 24px;
+    height: 24px;
+    background: white;
+    border: 2px solid #dee2e6;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 12px;
+    font-size: 10px;
+}
+
+.timeline-content {
+    flex: 1;
+    padding-bottom: 12px;
+}
+
+.timeline-item:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    left: 11px;
+    top: 24px;
+    bottom: -12px;
+    width: 2px;
+    background: #dee2e6;
+}
+
+.watchman-alert-detail .card-header {
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.badge {
+    font-size: 0.75rem;
+}
+
+.table-sm td, .table-sm th {
+    padding: 0.25rem 0.5rem;
+}
+</style>

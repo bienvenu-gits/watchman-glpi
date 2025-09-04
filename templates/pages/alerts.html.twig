@@ -1,0 +1,304 @@
+{# Template de base pour plugin GLPI - sans structure HTML complète #}
+{# Ce template s'intègre dans la structure HTML existante de GLPI #}
+
+{# CSS spécifique au plugin #}
+	{% block plugin_styles %}
+	<link rel="stylesheet" type="text/css" href="{{ base_url }}/plugins/watchman/assets/css/icons.css"> <link rel="stylesheet" type="text/css" href="{{ base_url }}/plugins/watchman/assets/css/tailwind.css">
+	<link
+	rel="stylesheet" type="text/css" href="{{ base_url }}/plugins/watchman/assets/css/cms_watchman.css">
+	{# Flatpickr pour le date range picker #}
+	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+	<style>
+		.selected {
+			background-color: #e3f2fd !important;
+		}
+		.bulk-actions-container {
+			margin-bottom: 15px;
+			padding: 15px;
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+			background-color: #d4edda;
+			border: 1px solid #c3e6cb;
+			border-radius: 5px;
+		}
+		.bulk-actions-buttons {
+			display: flex;
+			gap: 10px;
+		}
+		.alert-title {
+			max-width: 300px;
+			overflow: hidden;
+			text-overflow: ellipsis;
+			white-space: nowrap;
+		}
+		.cms_watchman_content_loading {
+			text-align: center;
+			padding: 50px;
+		}
+		.cms_watchman_loading {
+			display: inline-block;
+			width: 40px;
+			height: 40px;
+			border: 3px solid #f3f3f3;
+			border-top: 3px solid #3498db;
+			border-radius: 50%;
+			animation: spin 1s linear infinite;
+		}
+		@keyframes spin {
+			0% {
+				transform: rotate(0deg);
+			}
+			100% {
+				transform: rotate(360deg);
+			}
+		}
+		.cms_watchman_content_empty {
+			text-align: center;
+			padding: 50px;
+			color: #666;
+		}
+		.cms_watchman_content_empty h1 {
+			font-size: 24px;
+			margin-bottom: 10px;
+			color: #333;
+		}
+		.cms_watchman_content_empty .description {
+			font-size: 16px;
+			color: #666;
+		}
+		.dropdown-menu {
+			min-width: 150px;
+		}
+		.dropdown-item {
+			padding: 8px 15px;
+			cursor: pointer;
+		}
+		.dropdown-item:hover {
+			background-color: #f8f9fa;
+		}
+	</style>
+{% endblock %}
+
+{# Token CSRF pour les requêtes AJAX #}
+<input type="hidden" name="_glpi_csrf_token" value="{{ csrf_token }}">
+
+<div
+	class="plugin-container">
+	{# Navbar du plugin #}
+	{% block navbar %}
+		{% include '@watchman/components/navbar.html.twig' %}
+	{% endblock %}
+
+	<div data-layout-mode="light" class="cms_watchman">
+		<div class="cms_watchman_container cms_watchman_page_content">
+			<div class="cms_watchman_card cms_watchman_content_main">
+				<div class="cms_watchman_content_main_header">
+					<h1>{{ __('Alertes', 'watchman') }}</h1>
+					<div class="cms_watchman_btn-group">
+						<button type="button" class="cms_watchman_btn cms_watchman_btn-primary btn-sm" onclick="location.reload()">
+							<i class="fas fa-sync me-1"></i>
+							{{ __('Actualiser', 'watchman') }}
+						</button>
+						<button type="button" class="cms_watchman_btn cms_watchman_btn-success btn-sm" id="cms_watchman_start_cron_btn">
+							<i class="fas fa-play me-1"></i>
+							{{ __('Synchroniser', 'watchman') }}
+						</button>
+					</div>
+				</div>
+
+				<!-- Loading State -->
+				<div class="cms_watchman_content_loading">
+					<span class="cms_watchman_loading"></span>
+					<p>{{ __('Chargement des alertes...', 'watchman') }}</p>
+				</div>
+
+				<!-- Empty State -->
+				<div class="cms_watchman_content_empty hidden">
+					<h1 class="heading">{{ __('Aucune alerte', 'watchman') }}</h1>
+					<p class="description">
+						{{ __('Aucune vulnérabilité n\'a été détectée pour le moment', 'watchman') }}</p>
+                </div>
+
+                <!-- Main Content -->
+                <div class="cms_watchman_content_main_body hidden">
+                    {% block content %}
+                        <!-- Statistiques -->
+                        <div class="cms_watchman_alert_statistic_row">
+                            <!-- Carte Aujourd'hui -->
+                            <div class="cms_watchman_alert_statistic_card" style="background: linear-gradient(90deg, #02AAB0 0%, #00B295 100%); margin-left:0px;">
+                                <div class="cms_watchman_alert_statistic_card_text">
+                                    <h1 class="cms_watchman_alert_statistic_card_text_heading">{{ __('Aujourd\'hui', 'watchman') }}</h1>
+                                    <h2 class="cms_watchman_alert_statistic_card_text_value" id="cms_watchman_alert_statistic_today_value">0</h2>
+                                </div>
+                                <div class="cms_watchman_alert_statistic_card_icon">
+                                    <div class="cms_watchman_alert_statistic_card_iconbox">
+                                        <i class="fas fa-clock"></i>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Carte Total -->
+                            <div class="cms_watchman_alert_statistic_card" style="background: linear-gradient(90.27deg, #00B295 -60.62%, #FABB18 179.06%);">
+                                <div class="cms_watchman_alert_statistic_card_text">
+                                    <h1 class="cms_watchman_alert_statistic_card_text_heading">{{ __('Total', 'watchman') }}</h1>
+                                    <h2 class="cms_watchman_alert_statistic_card_text_value" id="cms_watchman_alert_statistic_total_value">0</h2>
+                                </div>
+                                <div class="cms_watchman_alert_statistic_card_icon">
+                                    <div class="cms_watchman_alert_statistic_card_iconbox">
+                                        <i class="far fa-chart-bar"></i>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Carte Cette semaine -->
+                            <div class="cms_watchman_alert_statistic_card" style="background: linear-gradient(270.1deg, #3686F7 -0.34%, #00B295 100.17%);">
+                                <div class="cms_watchman_alert_statistic_card_text">
+                                    <h1 class="cms_watchman_alert_statistic_card_text_heading">{{ __('Cette semaine', 'watchman') }}</h1>
+                                    <h2 class="cms_watchman_alert_statistic_card_text_value" id="cms_watchman_alert_statistic_this_week_value">0</h2>
+                                </div>
+                                <div class="cms_watchman_alert_statistic_card_icon">
+                                    <div class="cms_watchman_alert_statistic_card_iconbox">
+                                        <i class="far fa-calendar-check"></i>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Carte Corrigées -->
+                            <div class="cms_watchman_alert_statistic_card" style="background: linear-gradient(90.27deg, #28a745 -60.62%, #20c997 179.06%);">
+                                <div class="cms_watchman_alert_statistic_card_text">
+                                    <h1 class="cms_watchman_alert_statistic_card_text_heading">{{ __('Corrigées', 'watchman') }}</h1>
+                                    <h2 class="cms_watchman_alert_statistic_card_text_value" id="cms_watchman_alert_statistic_patched_value">0</h2>
+                                </div>
+                                <div class="cms_watchman_alert_statistic_card_icon">
+                                    <div class="cms_watchman_alert_statistic_card_iconbox">
+                                        <i class="fas fa-check-circle"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Conteneur de filtres -->
+                        <div class="cms_watchman_filter_container">
+                            <div class="cms_watchman_input_group">
+                                <i class="fa fa-search"></i>
+                                <input class="cms_watchman_input" type="text" id="cms_watchman_search_alert_input_text" 
+                                       placeholder="{{ __('Rechercher par nom ou CVE', 'watchman') }}"/>
+                            </div>
+                            
+                            <select class="cms_watchman_select" id="cms_watchman_search_alert_input_patch">
+                                <option value="">{{ __('Statut de correction', 'watchman') }}</option>
+                                <option value="1">{{ __('Corrigées', 'watchman') }}</option>
+                                <option value="0">{{ __('Non corrigées', 'watchman') }}</option>
+                            </select>
+                            
+                            <select class="cms_watchman_select" id="cms_watchman_search_alert_input_severity">
+                                <option value="">{{ __('Sévérité', 'watchman') }}</option>
+                                <option value="CRITICAL">{{ __('Critique', 'watchman') }}</option>
+                                <option value="HIGH">{{ __('Élevée', 'watchman') }}</option>
+                                <option value="MEDIUM">{{ __('Moyenne', 'watchman') }}</option>
+                                <option value="LOW">{{ __('Faible', 'watchman') }}</option>
+                            </select>
+                            
+                            <div class="cms_watchman_input_group">
+                                <i class="fa fa-calendar"></i>
+                                <input class="cms_watchman_input" autocomplete="off" id="cms_watchman__search_alert_date_range" 
+                                       type="text" placeholder="{{ __('Filtrer par date', 'watchman') }}"/>
+                            </div>
+                            
+                            <button class="cms_watchman_btn" id="cms_watchman_search_alert_btn">
+                                <span>
+                                    <i class="fa fa-search"></i>
+                                </span>
+                            </button>
+                            
+                            <button class="cms_watchman_btn cms_watchman_btn-outline" id="cms_watchman_reset_search_alert_btn">
+                                <i class="mdi mdi-replay"></i>
+                            </button>
+                        </div>
+
+                        <!-- Tableau des alertes -->
+                        <div class="cms_watchman_table_container">
+                            <table class="cms_watchman_table" id="cms_watchman_alerts_table">
+                                <thead>
+                                    <tr>
+                                        <th width="2%">
+                                            <input type="checkbox" id="select-all">
+                                        </th>
+                                        <th width="15%">{{ __('CVE', 'watchman') }}</th>
+                                        <th width="25%">{{ __('Titre', 'watchman') }}</th>
+                                        <th width="10%">{{ __('Score', 'watchman') }}</th>
+                                        <th width="10%">{{ __('Sévérité', 'watchman') }}</th>
+                                        <th width="10%">{{ __('Statut', 'watchman') }}</th>
+                                        <th width="10%">{{ __('Ticket', 'watchman') }}</th>
+                                        <th width="10%">{{ __('Date', 'watchman') }}</th>
+                                        <th width="5%">{{ __('Actions', 'watchman') }}</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Les données seront chargées via AJAX -->
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Pagination -->
+                        <div class="cms_watchman_pagination_container" id="cms_watchman_pagination_alerts">
+                            <div class="cms_watchman_pagination_total">
+                                {{ __('Total', 'watchman') }}
+                            </div>
+                            <div class="cms_watchman_pagination_display">
+                                <button class="cms_watchman_pagination_preview_button cms_watchman_btn cms_watchman_btn-primary">
+                                    <i class="fa fa-chevron-left"></i>
+                                </button>
+                                <span class="cms_watchman_pagination_number">1 / 1</span>
+                                <button class="cms_watchman_pagination_next_button cms_watchman_btn cms_watchman_btn-primary">
+                                    <i class="fa fa-chevron-right"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                    {% endblock %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {# Footer optionnel #}
+    {% block footer %}
+        {% include '@watchman/components/footer.html.twig' %}
+    {% endblock %}
+</div>
+
+{# JavaScript spécifique au plugin #}
+{% block plugin_scripts %}
+    {# Flatpickr pour le date range picker #}
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/fr.js"></script>
+    
+    {# Bootstrap JS pour les dropdowns #}
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+    const WATCHMAN_CONFIG = {
+    ajaxUrl: '{{ path('plugins/watchman/ajax/alerts.php') }}',
+	csrfToken: '{{ csrf_token }}',
+	translations: {
+	confirmDelete: '{{ __("Êtes-vous sûr de vouloir supprimer cette alerte ?", "watchman") }}',
+    confirmBulkDelete: '{{ __("Êtes-vous sûr de vouloir supprimer les alertes sélectionnées ?", "watchman") }}',
+    confirmMarkPatched: '{{ __("Marquer cette alerte comme corrigée ?", "watchman") }}',
+    confirmBulkPatched: '{{ __("Marquer les alertes sélectionnées comme corrigées ?", "watchman") }}',
+    loading: '{{ __("Chargement...", "watchman") }}',
+    error: '{{ __("Erreur", "watchman") }}',
+    success: '{{ __("Succès", "watchman") }}'
+        }
+    };
+	$(document).ready(function() {
+		console.log('Plugin {{ plugin_name|default("Watchman") }}initialisé');
+        if (typeof flatpickr !== 'undefined') {
+            flatpickr.localize(flatpickr.l10ns.fr);
+        }
+    });
+		
+	</script>
+	{# Script principal des alertes #}
+	<script src="{{ base_url }}/plugins/watchman/assets/js/alerts.js"></script>
+	{% endblock %}

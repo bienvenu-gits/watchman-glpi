@@ -1,0 +1,1074 @@
+{#
+ # Template pour l'affichage de la liste des alertes
+ # @var array alerts - Liste des alertes
+ # @var object item - Instance de AlertManager
+ # @var array params - Paramètres d'affichage
+ # @var string csrf_token - Token CSRF
+ #}
+
+<div class="watchman-alerts-container">
+    {# En-tête de la page #}
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h3 class="card-title">
+            <i class="fas fa-exclamation-triangle text-warning me-2"></i>
+            {{ __('Alertes de sécurité', 'watchman') }}
+            <span class="badge bg-secondary ms-2">{{ alerts|length }}</span>
+        </h3>
+        
+        <div class="btn-group">
+            <button type="button" class="btn btn-primary btn-sm" onclick="location.reload()">
+                <i class="fas fa-sync me-1"></i>
+                {{ __('Actualiser', 'watchman') }}
+            </button>
+            <button type="button" class="btn btn-success btn-sm" onclick="startCron()">
+                <i class="fas fa-play me-1"></i>
+                {{ __('Synchroniser', 'watchman') }}
+            </button>
+        </div>
+    </div>
+
+    {# Filtres et statistiques #}
+    <div class="card-body">
+        <div class="row mb-3">
+            <div class="col-md-8">
+                <div class="d-flex gap-2">
+                    <select class="form-select form-select-sm" id="severity-filter" onchange="filterAlerts()">
+                        <option value="">{{ __('Toutes les sévérités', 'watchman') }}</option>
+                        <option value="CRITICAL">{{ __('Critique', 'watchman') }}</option>
+                        <option value="HIGH">{{ __('Élevée', 'watchman') }}</option>
+                        <option value="MEDIUM">{{ __('Moyenne', 'watchman') }}</option>
+                        <option value="LOW">{{ __('Faible', 'watchman') }}</option>
+                    </select>
+                    
+                    <select class="form-select form-select-sm" id="patched-filter" onchange="filterAlerts()">
+                        <option value="">{{ __('Tous les statuts', 'watchman') }}</option>
+                        <option value="0">{{ __('Non corrigées', 'watchman') }}</option>
+                        <option value="1">{{ __('Corrigées', 'watchman') }}</option>
+                    </select>
+                    
+                    <input type="text" class="form-control form-control-sm" id="search-input" 
+                           placeholder="{{ __('Rechercher...', 'watchman') }}" onkeyup="filterAlerts()">
+                </div>
+            </div>
+            
+            <div class="col-md-4 text-end">
+                {% set critical_count = 0 %}
+                {% set high_count = 0 %}
+                {% set unpatched_count = 0 %}
+                
+                {% for alert in alerts %}
+                    {% if alert.severity == 'CRITICAL' %}
+                        {% set critical_count = critical_count + 1 %}
+                    {% elseif alert.severity == 'HIGH' %}
+                        {% set high_count = high_count + 1 %}
+                    {% endif %}
+                    
+                    {% if alert.patched == 0 %}
+                        {% set unpatched_count = unpatched_count + 1 %}
+                    {% endif %}
+                {% endfor %}
+                
+                <div class="d-flex gap-3 justify-content-end">
+                    <div class="text-center">
+                        <div class="badge bg-danger fs-6">{{ critical_count }}</div>
+                        <small class="d-block text-muted">{{ __('Critique', 'watchman') }}</small>
+                    </div>
+                    <div class="text-center">
+                        <div class="badge bg-warning fs-6">{{ high_count }}</div>
+                        <small class="d-block text-muted">{{ __('Élevée', 'watchman') }}</small>
+                    </div>
+                    <div class="text-center">
+                        <div class="badge bg-info fs-6">{{ unpatched_count }}</div>
+                        <small class="d-block text-muted">{{ __('Non corrigées', 'watchman') }}</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {# Tableau des alertes #}
+        {% if alerts|length > 0 %}
+            <div class="table-responsive">
+                <table class="table table-hover" id="alerts-table">
+                    <thead class="table-light">
+                        <tr>
+                            <th width="5%">
+                                <input type="checkbox" id="select-all" onchange="toggleAllAlerts()">
+                            </th>
+                            <th width="15%">{{ __('CVE', 'watchman') }}</th>
+                            <th width="25%">{{ __('Titre', 'watchman') }}</th>
+                            <th width="10%">{{ __('Score', 'watchman') }}</th>
+                            <th width="10%">{{ __('Sévérité', 'watchman') }}</th>
+                            <th width="10%">{{ __('Statut', 'watchman') }}</th>
+                            <th width="10%">{{ __('Ticket', 'watchman') }}</th>
+                            <th width="10%">{{ __('Date', 'watchman') }}</th>
+                            <th width="5%">{{ __('Actions', 'watchman') }}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for alert in alerts %}
+                            <tr class="alert-row" 
+                                data-severity="{{ alert.severity|lower }}" 
+                                data-patched="{{ alert.patched }}"
+                                data-search="{{ (alert.title ~ ' ' ~ alert.cves_id ~ ' ' ~ alert.description)|lower }}">
+                                <td>
+                                    <input type="checkbox" class="alert-checkbox" value="{{ alert.id }}">
+                                </td>
+                                
+                                <td>
+                                    <code class="fw-bold text-primary">{{ alert.cves_id }}</code>
+                                    {% if alert.possible_false %}
+                                        <i class="fas fa-question-circle text-warning ms-1" 
+                                           title="{{ __('Possible faux positif', 'watchman') }}"></i>
+                                    {% endif %}
+                                </td>
+                                
+                                <td>
+                                    <div class="fw-bold">{{ alert.title|slice(0, 60) }}{% if alert.title|length > 60 %}...{% endif %}</div>
+                                    <small class="text-muted">{{ alert.description|slice(0, 100)|striptags }}{% if alert.description|length > 100 %}...{% endif %}</small>
+                                </td>
+                                
+                                <td class="text-center">
+                                    {% if alert.score %}
+                                        {% set score_class = 'success' %}
+                                        {% if alert.score >= 7.0 %}
+                                            {% set score_class = 'danger' %}
+                                        {% elseif alert.score >= 4.0 %}
+                                            {% set score_class = 'warning' %}
+                                        {% endif %}
+                                        <span class="badge bg-{{ score_class }}">{{ alert.score }}</span>
+                                    {% else %}
+                                        <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                                
+                                <td class="text-center">
+                                    {% if alert.severity %}
+                                        {% set severity_class = 'secondary' %}
+                                        {% set severity_label = alert.severity %}
+                                        
+                                        {% if alert.severity == 'CRITICAL' %}
+                                            {% set severity_class = 'danger' %}
+                                            {% set severity_label = __('Critique', 'watchman') %}
+                                        {% elseif alert.severity == 'HIGH' %}
+                                            {% set severity_class = 'warning' %}
+                                            {% set severity_label = __('Élevée', 'watchman') %}
+                                        {% elseif alert.severity == 'MEDIUM' %}
+                                            {% set severity_class = 'info' %}
+                                            {% set severity_label = __('Moyenne', 'watchman') %}
+                                        {% elseif alert.severity == 'LOW' %}
+                                            {% set severity_class = 'success' %}
+                                            {% set severity_label = __('Faible', 'watchman') %}
+                                        {% endif %}
+                                        
+                                        <span class="badge bg-{{ severity_class }}">{{ severity_label }}</span>
+                                    {% else %}
+                                        <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                                
+                                <td class="text-center">
+                                    <div class="d-flex flex-column gap-1">
+                                        {% if alert.patched %}
+                                            <span class="badge bg-success">
+                                                <i class="fas fa-check me-1"></i>{{ __('Corrigée', 'watchman') }}
+                                            </span>
+                                            {% if alert.patched_at %}
+                                                <small class="text-muted">{{ alert.patched_at|date('d/m/Y') }}</small>
+                                            {% endif %}
+                                        {% else %}
+                                            <span class="badge bg-warning">
+                                                <i class="fas fa-exclamation me-1"></i>{{ __('En attente', 'watchman') }}
+                                            </span>
+                                        {% endif %}
+                                        
+                                        {# <div class="d-flex gap-1 justify-content-center">
+                                            {% if alert.integration_notified %}
+                                                <i class="fas fa-bell text-success" title="{{ __('Intégration notifiée', 'watchman') }}"></i>
+                                            {% endif %}
+                                            {% if alert.email_notified %}
+                                                <i class="fas fa-envelope text-primary" title="{{ __('Email envoyé', 'watchman') }}"></i>
+                                            {% endif %}
+                                            {% if alert.reported %}
+                                                <i class="fas fa-flag text-info" title="{{ __('Signalée', 'watchman') }}"></i>
+                                            {% endif %}
+                                        </div> #}
+
+                                    </div>
+                                </td>
+                                
+                                <td class="text-center">
+                                    {% if alert.tickets_id %}
+                                        <a href="{{ path('front/ticket.form.php') }}?id={{ alert.tickets_id }}" 
+                                           class="btn btn-sm btn-outline-primary" target="_blank">
+                                            <i class="fas fa-ticket-alt me-1"></i>#{{ alert.tickets_id }}
+                                        </a>
+                                    {% else %}
+                                        <button class="btn btn-sm btn-outline-success" 
+                                                onclick="createTicket('{{ alert.id }}', '{{ csrf_token }}')">
+                                            <i class="fas fa-plus me-1"></i>{{ __('Créer', 'watchman') }}
+                                        </button>
+                                    {% endif %}
+                                </td>
+                                
+                                <td>
+                                    <div class="text-center">
+                                        <div>{{ alert.date_creation|date('d/m/Y') }}</div>
+                                        <small class="text-muted">{{ alert.date_creation|date('H:i') }}</small>
+                                    </div>
+                                </td>
+                                
+                                <td class="text-center">
+                                    <div class="dropdown">
+                                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" 
+                                                type="button" data-bs-toggle="dropdown">
+                                            <i class="fas fa-ellipsis-v"></i>
+                                        </button>
+                                        <ul class="dropdown-menu">
+                                            <li>
+                                                <a class="dropdown-item" href="?alert_id={{alert.id}}" >
+                                                    <i class="fas fa-eye me-2"></i>{{ __('Voir détails', 'watchman') }}
+                                                </a>
+                                            </li>
+                                            {% if not alert.patched %}
+                                                <li>
+                                                    <a class="dropdown-item" href="#" onclick="markAsPatched('{{ alert.id }}', '{{ csrf_token }}')">
+                                                        <i class="fas fa-check me-2"></i>{{ __('Marquer comme corrigée', 'watchman') }}
+                                                    </a>
+                                                </li>
+                                            {% endif %}
+                                            
+                                        </ul>
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            {# Actions groupées #}
+            <div class="mt-3 d-none" id="bulk-actions">
+                <div class="alert alert-info">
+                    <strong><span id="selected-count">0</span></strong> {{ __('alerte(s) sélectionnée(s)', 'watchman') }}
+                    <div class="btn-group ms-3">
+                        <button class="btn btn-success btn-sm" onclick="bulkAction('mark-patched')">
+                            <i class="fas fa-check me-1"></i>{{ __('Marquer comme corrigées', 'watchman') }}
+                        </button>
+                        {# <button class="btn btn-warning btn-sm" onclick="bulkAction('false-positive')">
+                            <i class="fas fa-question-circle me-1"></i>{{ __('Faux positifs', 'watchman') }}
+                        </button> #}
+                        <button class="btn btn-primary btn-sm" onclick="bulkAction('create-tickets')">
+                            <i class="fas fa-ticket-alt me-1"></i>{{ __('Créer tickets', 'watchman') }}
+                        </button>
+                        {# <button class="btn btn-danger btn-sm" onclick="bulkAction('delete')">
+                            <i class="fas fa-trash me-1"></i>{{ __('Supprimer', 'watchman') }}
+                        </button> #}
+                    </div>
+                </div>
+            </div>
+            
+        {% else %}
+            {# Aucune alerte #}
+            <div class="text-center py-5">
+                <i class="fas fa-shield-alt text-success" style="font-size: 4rem;"></i>
+                <h4 class="mt-3">{{ __('Aucune alerte active', 'watchman') }}</h4>
+                <p class="text-muted">{{ __('Toutes vos applications semblent être à jour !', 'watchman') }}</p>
+                <button class="btn btn-primary" onclick="startCron()">
+                    <i class="fas fa-sync me-2"></i>{{ __('Vérifier maintenant', 'watchman') }}
+                </button>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+{# JavaScript pour les interactions #}
+<script>
+function filterAlerts() {
+    const severityFilter = document.getElementById('severity-filter').value.toLowerCase();
+    const patchedFilter = document.getElementById('patched-filter').value;
+    const searchTerm = document.getElementById('search-input').value.toLowerCase();
+    
+    const rows = document.querySelectorAll('.alert-row');
+    
+    rows.forEach(row => {
+        const severity = row.dataset.severity;
+        const patched = row.dataset.patched;
+        const searchData = row.dataset.search;
+        
+        let showRow = true;
+        
+        if (severityFilter && severity !== severityFilter) showRow = false;
+        if (patchedFilter !== '' && patched !== patchedFilter) showRow = false;
+        if (searchTerm && !searchData.includes(searchTerm)) showRow = false;
+        
+        row.style.display = showRow ? '' : 'none';
+    });
+}
+
+function toggleAllAlerts() {
+    const masterCheckbox = document.getElementById('select-all');
+    const checkboxes = document.querySelectorAll('.alert-checkbox');
+    
+    checkboxes.forEach(cb => {
+        cb.checked = masterCheckbox.checked;
+    });
+    
+    updateBulkActions();
+}
+
+function updateBulkActions() {
+    const checked = document.querySelectorAll('.alert-checkbox:checked');
+    const bulkActions = document.getElementById('bulk-actions');
+    const selectedCount = document.getElementById('selected-count');
+    
+    if (checked.length > 0) {
+        bulkActions.classList.remove('d-none');
+        selectedCount.textContent = checked.length;
+    } else {
+        bulkActions.classList.add('d-none');
+    }
+}
+
+// Event listeners pour les checkboxes
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.alert-checkbox').forEach(cb => {
+        cb.addEventListener('change', updateBulkActions);
+    });
+});
+
+{# function startCron() {
+    // Implémentation AJAX pour démarrer la synchronisation
+    fetch('{{ path('plugins/watchman/ajax/watchman.php') }}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: JSON.stringify({
+            action: 'start_cron',
+            csrf_token: '{{ csrf_token }}'
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        } else {
+            alert('{{ __("Erreur lors de la synchronisation", "watchman") }}');
+        }
+    });
+} #}
+/**
+ * Fonctions JavaScript pour l'interface Watchman
+ * À remplacer dans le template Twig
+ */
+
+// Configuration globale
+const WATCHMAN_CONFIG = {
+    ajaxUrl: '{{ path('plugins/watchman/ajax/watchman.php') }}',
+    csrfToken: '{{ csrf_token }}',
+    translations: {
+        confirmDelete: '{{ __("Êtes-vous sûr de vouloir supprimer cette alerte ?", "watchman") }}',
+        confirmBulkDelete: '{{ __("Êtes-vous sûr de vouloir supprimer les alertes sélectionnées ?", "watchman") }}',
+        confirmMarkPatched: '{{ __("Marquer cette alerte comme corrigée ?", "watchman") }}',
+        confirmBulkPatched: '{{ __("Marquer les alertes sélectionnées comme corrigées ?", "watchman") }}',
+        loading: '{{ __("Chargement...", "watchman") }}',
+        error: '{{ __("Erreur", "watchman") }}',
+        success: '{{ __("Succès", "watchman") }}'
+    }
+};
+
+/**
+ * Utilitaire pour les requêtes AJAX
+ */
+async function makeAjaxRequest(action, data = {}) {
+    const payload = {
+        action: action,
+        _glpi_csrf_token: WATCHMAN_CONFIG.csrfToken,
+        ...data
+    };
+    
+    try {
+        const response = await fetch(WATCHMAN_CONFIG.ajaxUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: JSON.stringify(payload)
+        });
+        
+
+        
+        const result = await response.json();
+        console.log('response',result);
+        
+        if (!response.ok) {
+            throw new Error(result.message || 'Erreur serveur');
+        }
+        
+        return result;
+    } catch (error) {
+        console.error('Erreur AJAX:', error);
+        throw error;
+    }
+}
+
+/**
+ * Affiche une notification toast
+ */
+
+function showNotification(message, type = 'info') {
+    // Implémentation basique - peut être remplacée par une librairie toast
+    const alertClass = {
+        'success': 'alert-success',
+        'error': 'alert-danger',
+        'warning': 'alert-warning',
+        'info': 'alert-info'
+    }[type] || 'alert-info';
+    
+    const toast = document.createElement('div');
+    toast.className = `alert ${alertClass} alert-dismissible fade show position-fixed`;
+    toast.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+    toast.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    document.body.appendChild(toast);
+    
+    // Auto-dismiss après 5 secondes
+    setTimeout(() => {
+        if (toast.parentNode) {
+            toast.remove();
+        }
+    }, 5000);
+}
+
+/**
+ * Démarre la synchronisation des alertes
+ */
+async function startCron() {
+    const btn = event?.target;
+    const originalText = btn?.innerHTML;
+    
+    try {
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>' + WATCHMAN_CONFIG.translations.loading;
+        }
+        
+        const result = await makeAjaxRequest('start_cron');
+        
+        if (result.success) {
+            showNotification(result.message, 'success');
+            // Recharger la page après 2 secondes
+            setTimeout(() => {
+                location.reload();
+            }, 2000);
+        } else {
+            showNotification(result.message, 'error');
+        }
+    } catch (error) {
+        showNotification(error.message, 'error');
+    } finally {
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+        }
+    }
+}
+
+/**
+ * Crée un ticket GLPI à partir d'une alerte
+ */
+async function createTicket(alertId, csrfToken) {
+    const btn = event?.target;
+    const originalText = btn?.innerHTML;
+    
+    try {
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>' + WATCHMAN_CONFIG.translations.loading;
+        }
+        
+        const result = await makeAjaxRequest('create_ticket', {
+            alert_id: alertId
+        });
+        
+        if (result.success) {
+            showNotification(result.message, 'success');
+            
+            // Mettre à jour l'interface : remplacer le bouton créer par un lien vers le ticket
+            if (btn && result.ticket_id) {
+                const newBtn = document.createElement('a');
+                newBtn.href = `{{ path('front/ticket.form.php') }}?id=${result.ticket_id}`;
+                newBtn.target = '_blank';
+                newBtn.className = 'btn btn-sm btn-outline-primary';
+                newBtn.innerHTML = `<i class="fas fa-ticket-alt me-1"></i>#${result.ticket_id}`;
+                btn.parentNode.replaceChild(newBtn, btn);
+            }
+        } else {
+            showNotification(result.message, 'error');
+        }
+    } catch (error) {
+        showNotification(error.message, 'error');
+    } finally {
+        if (btn && btn.parentNode) {
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+        }
+    }
+}
+
+/**
+ * Marque une alerte comme corrigée
+ */
+async function markAsPatched(alertId, csrfToken) {
+    if (!confirm(WATCHMAN_CONFIG.translations.confirmMarkPatched)) {
+        return;
+    }
+    
+    try {
+        const result = await makeAjaxRequest('mark_patched', {
+            alert_id: alertId
+        });
+
+        console.log('Result:', result);
+        
+        if (result.success) {
+            showNotification(result.message, 'success');
+            
+            // Mettre à jour visuellement la ligne
+            const row = document.querySelector(`tr[data-alert-id="${alertId}"]`);
+            if (row) {
+                const statusCell = row.querySelector('td:nth-child(6)'); // Colonne statut
+                if (statusCell) {
+                    statusCell.innerHTML = `
+                        <span class="badge bg-success">
+                            <i class="fas fa-check me-1"></i>{{ __('Corrigée', 'watchman') }}
+                        </span>
+                        <small class="d-block text-muted">${new Date().toLocaleDateString('fr-FR')}</small>
+                    `;
+                }
+                
+                // Mettre à jour l'attribut data pour le filtrage
+                row.setAttribute('data-patched', '1');
+                
+                // Supprimer l'option "Marquer comme corrigée" du menu
+                const markPatchedLink = row.querySelector('a[onclick*="markAsPatched"]');
+                if (markPatchedLink) {
+                    markPatchedLink.parentElement.remove();
+                }
+            }
+            
+            // Mettre à jour les statistiques
+            updateStatistics();
+        } else {
+            showNotification(result.message, 'error');
+        }
+    } catch (error) {
+        showNotification(error.message, 'error');
+    }
+}
+
+/**
+ * Bascule le statut de faux positif d'une alerte
+ */
+async function toggleFalsePositive(alertId, isFalsePositive, csrfToken) {
+    try {
+        const result = await makeAjaxRequest('toggle_false_positive', {
+            alert_id: alertId,
+            is_false_positive: isFalsePositive
+        });
+        
+        if (result.success) {
+            showNotification(result.message, 'success');
+            
+            // Mettre à jour visuellement l'icône de faux positif
+            const row = document.querySelector(`tr[data-alert-id="${alertId}"]`);
+            if (row) {
+                const cveCell = row.querySelector('td:nth-child(2)'); // Colonne CVE
+                const falsePositiveIcon = cveCell?.querySelector('.fa-question-circle');
+                
+                if (isFalsePositive) {
+                    if (!falsePositiveIcon) {
+                        const icon = document.createElement('i');
+                        icon.className = 'fas fa-question-circle text-warning ms-1';
+                        icon.title = '{{ __("Possible faux positif", "watchman") }}';
+                        cveCell?.appendChild(icon);
+                    }
+                } else {
+                    if (falsePositiveIcon) {
+                        falsePositiveIcon.remove();
+                    }
+                }
+                
+                // Mettre à jour le menu contextuel
+                const toggleLink = row.querySelector('a[onclick*="toggleFalsePositive"]');
+                if (toggleLink) {
+                    const icon = toggleLink.querySelector('i');
+                    const text = toggleLink.lastChild;
+                    
+                    if (isFalsePositive) {
+                        icon.className = 'fas fa-undo me-2';
+                        text.textContent = ' {{ __("Retirer faux positif", "watchman") }}';
+                        toggleLink.setAttribute('onclick', `toggleFalsePositive('${alertId}', false, '${csrfToken}')`);
+                    } else {
+                        icon.className = 'fas fa-question-circle me-2';
+                        text.textContent = ' {{ __("Marquer faux positif", "watchman") }}';
+                        toggleLink.setAttribute('onclick', `toggleFalsePositive('${alertId}', true, '${csrfToken}')`);
+                    }
+                }
+            }
+        } else {
+            showNotification(result.message, 'error');
+        }
+    } catch (error) {
+        showNotification(error.message, 'error');
+    }
+}
+
+/**
+ * Supprime une alerte
+ */
+async function deleteAlert(alertId, csrfToken) {
+    if (!confirm(WATCHMAN_CONFIG.translations.confirmDelete)) {
+        return;
+    }
+    
+    try {
+        const result = await makeAjaxRequest('delete_alert', {
+            alert_id: alertId
+        });
+        
+        if (result.success) {
+            showNotification(result.message, 'success');
+            
+            // Supprimer visuellement la ligne avec animation
+            const row = document.querySelector(`tr[data-alert-id="${alertId}"]`);
+            if (row) {
+                row.style.transition = 'opacity 0.3s ease-out';
+                row.style.opacity = '0';
+                
+                setTimeout(() => {
+                    row.remove();
+                    updateStatistics();
+                    
+                    // Vérifier s'il reste des alertes
+                    const remainingRows = document.querySelectorAll('.alert-row');
+                    if (remainingRows.length === 0) {
+                        location.reload(); // Recharger pour afficher le message "Aucune alerte"
+                    }
+                }, 300);
+            }
+        } else {
+            showNotification(result.message, 'error');
+        }
+    } catch (error) {
+        showNotification(error.message, 'error');
+    }
+}
+
+/**
+ * Affiche les détails d'une alerte dans une modal
+ */
+async function viewAlert(alertId) {
+    try {
+        const result = await makeAjaxRequest('get_alert_details', {
+            alert_id: alertId
+        });
+        
+        if (result.success) {
+            showAlertModal(result.alert, result.formatted);
+        } else {
+            showNotification(result.message, 'error');
+        }
+    } catch (error) {
+        showNotification(error.message, 'error');
+    }
+}
+
+/**
+ * Affiche la modal avec les détails de l'alerte
+ */
+function showAlertModal(alert, formatted) {
+    // Créer la modal si elle n'existe pas
+    let modal = document.getElementById('alert-details-modal');
+    if (!modal) {
+        modal = createAlertModal();
+        document.body.appendChild(modal);
+    }
+    
+    // Remplir le contenu
+    const modalBody = modal.querySelector('.modal-body');
+    modalBody.innerHTML = `
+        <div class="row">
+            <div class="col-md-6">
+                <h6>{{ __('Informations générales', 'watchman') }}</h6>
+                <table class="table table-sm">
+                    <tr>
+                        <td><strong>CVE:</strong></td>
+                        <td><code>${alert.cves_id}</code></td>
+                    </tr>
+                    <tr>
+                        <td><strong>{{ __('Score CVSS', 'watchman') }}:</strong></td>
+                        <td>
+                            ${alert.score ? 
+                                `<span class="badge bg-${formatted.formatted_score.class}">${formatted.formatted_score.value}</span>` : 
+                                '-'
+                            }
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><strong>{{ __('Sévérité', 'watchman') }}:</strong></td>
+                        <td><span class="badge bg-${formatted.severity_class}">${formatted.severity_label}</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>{{ __('Statut', 'watchman') }}:</strong></td>
+                        <td><span class="badge bg-${formatted.status_class}">${formatted.status_label}</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>{{ __('Date création', 'watchman') }}:</strong></td>
+                        <td>${formatted.formatted_date}</td>
+                    </tr>
+                </table>
+            </div>
+            <div class="col-md-6">
+                <h6>{{ __('État des notifications', 'watchman') }}</h6>
+                <div class="d-flex flex-column gap-2">
+                    <div>
+                        <i class="fas fa-${alert.integration_notified ? 'check text-success' : 'times text-muted'}"></i>
+                        {{ __('Intégration notifiée', 'watchman') }}
+                    </div>
+                    <div>
+                        <i class="fas fa-${alert.email_notified ? 'check text-success' : 'times text-muted'}"></i>
+                        {{ __('Email envoyé', 'watchman') }}
+                    </div>
+                    <div>
+                        <i class="fas fa-${alert.reported ? 'check text-success' : 'times text-muted'}"></i>
+                        {{ __('Signalée', 'watchman') }}
+                    </div>
+                    ${alert.possible_false ? '<div><i class="fas fa-question-circle text-warning"></i> {{ __("Possible faux positif", "watchman") }}</div>' : ''}
+                </div>
+            </div>
+        </div>
+        
+        <div class="row mt-3">
+            <div class="col-12">
+                <h6>{{ __('Titre', 'watchman') }}</h6>
+                <p class="fw-bold">${alert.title}</p>
+            </div>
+        </div>
+        
+        <div class="row">
+            <div class="col-12">
+                <h6>{{ __('Description', 'watchman') }}</h6>
+                <div class="border p-3 bg-light">
+                    ${alert.description || '{{ __("Aucune description disponible", "watchman") }}'}
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Afficher la modal
+    const bsModal = new bootstrap.Modal(modal);
+    bsModal.show();
+}
+
+/**
+ * Crée la structure HTML de la modal
+ */
+function createAlertModal() {
+    const modal = document.createElement('div');
+    modal.id = 'alert-details-modal';
+    modal.className = 'modal fade';
+    modal.innerHTML = `
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-exclamation-triangle text-warning me-2"></i>
+                        {{ __('Détails de l\'alerte', 'watchman') }}
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <!-- Contenu dynamique -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        {{ __('Fermer', 'watchman') }}
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+    return modal;
+}
+
+/**
+ * Gère les actions groupées
+ */
+async function bulkAction(action) {
+    const selected = Array.from(document.querySelectorAll('.alert-checkbox:checked')).map(cb => cb.value);
+    
+    if (selected.length === 0) {
+        showNotification('{{ __("Aucune alerte sélectionnée", "watchman") }}', 'warning');
+        return;
+    }
+    
+    // Confirmation pour certaines actions
+    let confirmMessage = '';
+    switch (action) {
+        case 'delete':
+            confirmMessage = WATCHMAN_CONFIG.translations.confirmBulkDelete;
+            break;
+        case 'mark-patched':
+            confirmMessage = WATCHMAN_CONFIG.translations.confirmBulkPatched;
+            break;
+    }
+    
+    if (confirmMessage && !confirm(confirmMessage)) {
+        return;
+    }
+    
+    try {
+        const result = await makeAjaxRequest('bulk_action', {
+            bulk_action: action,
+            alert_ids: selected
+        });
+        
+        if (result.success) {
+            showNotification(result.message, 'success');
+            
+            // Actions spécifiques selon le type
+            switch (action) {
+                case 'delete':
+                    // Supprimer les lignes sélectionnées
+                    selected.forEach(alertId => {
+                        const row = document.querySelector(`tr[data-alert-id="${alertId}"]`);
+                        if (row) row.remove();
+                    });
+                    break;
+                    
+                case 'mark-patched':
+                    // Mettre à jour le statut des lignes
+                    selected.forEach(alertId => {
+                        const row = document.querySelector(`tr[data-alert-id="${alertId}"]`);
+                        if (row) {
+                            row.setAttribute('data-patched', '1');
+                            const statusCell = row.querySelector('td:nth-child(6)');
+                            if (statusCell) {
+                                statusCell.innerHTML = `
+                                    <span class="badge bg-success">
+                                        <i class="fas fa-check me-1"></i>{{ __('Corrigée', 'watchman') }}
+                                    </span>
+                                `;
+                            }
+                        }
+                    });
+                    break;
+                    
+                case 'create-tickets':
+                    if (result.results && result.results.success) {
+                        // Mettre à jour les cellules tickets pour les créations réussies
+                        result.results.success.forEach(item => {
+                            const row = document.querySelector(`tr[data-alert-id="${item.alert_id}"]`);
+                            if (row) {
+                                const ticketCell = row.querySelector('td:nth-child(7)');
+                                if (ticketCell) {
+                                    ticketCell.innerHTML = `
+                                        <a href="{{ path('front/ticket.form.php') }}?id=${item.ticket_id}" 
+                                           class="btn btn-sm btn-outline-primary" target="_blank">
+                                            <i class="fas fa-ticket-alt me-1"></i>#${item.ticket_id}
+                                        </a>
+                                    `;
+                                }
+                            }
+                        });
+                    }
+                    break;
+            }
+            
+            // Décocher toutes les cases et masquer les actions groupées
+            document.getElementById('select-all').checked = false;
+            document.querySelectorAll('.alert-checkbox').forEach(cb => cb.checked = false);
+            updateBulkActions();
+            updateStatistics();
+            
+        } else {
+            showNotification(result.message, 'error');
+        }
+    } catch (error) {
+        showNotification(error.message, 'error');
+    }
+}
+
+/**
+ * Met à jour les statistiques affichées
+ */
+function updateStatistics() {
+    const rows = document.querySelectorAll('.alert-row');
+    let criticalCount = 0;
+    let highCount = 0;
+    let unpatchedCount = 0;
+    
+    rows.forEach(row => {
+        const severity = row.dataset.severity;
+        const patched = row.dataset.patched;
+        
+        if (severity === 'critical') criticalCount++;
+        if (severity === 'high') highCount++;
+        if (patched === '0') unpatchedCount++;
+    });
+    
+    // Mettre à jour les badges de statistiques
+    const criticalBadge = document.querySelector('.badge.bg-danger.fs-6');
+    const highBadge = document.querySelector('.badge.bg-warning.fs-6');
+    const unpatchedBadge = document.querySelector('.badge.bg-info.fs-6');
+    
+    if (criticalBadge) criticalBadge.textContent = criticalCount;
+    if (highBadge) highBadge.textContent = highCount;
+    if (unpatchedBadge) unpatchedBadge.textContent = unpatchedCount;
+    
+    // Mettre à jour le badge du nombre total
+    const totalBadge = document.querySelector('.card-title .badge.bg-secondary');
+    if (totalBadge) totalBadge.textContent = rows.length;
+}
+
+/**
+ * Initialisation au chargement de la page
+ */
+document.addEventListener('DOMContentLoaded', function() {
+    // Event listeners pour les checkboxes
+    document.querySelectorAll('.alert-checkbox').forEach(cb => {
+        cb.addEventListener('change', updateBulkActions);
+    });
+    
+    // Event listeners pour les liens de détails
+    document.querySelectorAll('a[onclick*="viewAlert"]').forEach(link => {
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+            const alertId = this.getAttribute('onclick').match(/viewAlert\('(\d+)'\)/)[1];
+            viewAlert(alertId);
+        });
+    });
+    
+    // Ajouter les attributs data-alert-id aux lignes (si pas déjà présents)
+    document.querySelectorAll('.alert-row').forEach(row => {
+        const checkbox = row.querySelector('.alert-checkbox');
+        if (checkbox && !row.hasAttribute('data-alert-id')) {
+            row.setAttribute('data-alert-id', checkbox.value);
+        }
+    });
+    
+    // Auto-refresh toutes les 5 minutes
+    setInterval(() => {
+        if (confirm('{{ __("Actualiser les alertes ?", "watchman") }}')) {
+            location.reload();
+        }
+    }, 300000); // 5 minutes
+});
+
+/**
+ * Fonctions existantes (filterAlerts, toggleAllAlerts, updateBulkActions)
+ * Conservées du template original
+ */
+function filterAlerts() {
+    const severityFilter = document.getElementById('severity-filter').value.toLowerCase();
+    const patchedFilter = document.getElementById('patched-filter').value;
+    const searchTerm = document.getElementById('search-input').value.toLowerCase();
+    
+    const rows = document.querySelectorAll('.alert-row');
+    let visibleCount = 0;
+    
+    rows.forEach(row => {
+        const severity = row.dataset.severity;
+        const patched = row.dataset.patched;
+        const searchData = row.dataset.search;
+        
+        let showRow = true;
+        
+        if (severityFilter && severity !== severityFilter) showRow = false;
+        if (patchedFilter !== '' && patched !== patchedFilter) showRow = false;
+        if (searchTerm && !searchData.includes(searchTerm)) showRow = false;
+        
+        row.style.display = showRow ? '' : 'none';
+        if (showRow) visibleCount++;
+    });
+    
+    // Mettre à jour le compteur d'alertes visibles
+    const totalBadge = document.querySelector('.card-title .badge.bg-secondary');
+    if (totalBadge) {
+        totalBadge.textContent = visibleCount;
+        totalBadge.title = `${visibleCount} alertes affichées sur ${rows.length} total`;
+    }
+}
+
+function toggleAllAlerts() {
+    const masterCheckbox = document.getElementById('select-all');
+    const visibleCheckboxes = document.querySelectorAll('.alert-row:not([style*="display: none"]) .alert-checkbox');
+    
+    visibleCheckboxes.forEach(cb => {
+        cb.checked = masterCheckbox.checked;
+    });
+    
+    updateBulkActions();
+}
+
+function updateBulkActions() {
+    const checked = document.querySelectorAll('.alert-checkbox:checked');
+    const bulkActions = document.getElementById('bulk-actions');
+    const selectedCount = document.getElementById('selected-count');
+    
+    if (checked.length > 0) {
+        bulkActions.classList.remove('d-none');
+        selectedCount.textContent = checked.length;
+    } else {
+        bulkActions.classList.add('d-none');
+    }
+    
+    // Mettre à jour l'état de la case "tout sélectionner"
+    const masterCheckbox = document.getElementById('select-all');
+    const visibleCheckboxes = document.querySelectorAll('.alert-row:not([style*="display: none"]) .alert-checkbox');
+    const checkedVisible = document.querySelectorAll('.alert-row:not([style*="display: none"]) .alert-checkbox:checked');
+    
+    if (visibleCheckboxes.length > 0) {
+        masterCheckbox.indeterminate = checkedVisible.length > 0 && checkedVisible.length < visibleCheckboxes.length;
+        masterCheckbox.checked = checkedVisible.length === visibleCheckboxes.length;
+    }
+}
+</script>
+
+{# Styles CSS additionnels #}
+<style>
+.watchman-alerts-container .table th {
+    background-color: #f8f9fa;
+    font-weight: 600;
+    border-bottom: 2px solid #dee2e6;
+}
+
+.alert-row:hover {
+    background-color: rgba(0, 123, 255, 0.05);
+}
+
+.badge {
+    font-size: 0.75rem;
+}
+
+.dropdown-menu {
+    font-size: 0.875rem;
+}
+
+#bulk-actions {
+    position: sticky;
+    bottom: 20px;
+    z-index: 10;
+}
+
+.table-responsive {
+    border-radius: 0.375rem;
+    border: 1px solid #dee2e6;
+}
+</style>
