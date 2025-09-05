@@ -6,6 +6,7 @@
 
 use Glpi\Http\Response;
 use GlpiPlugin\Watchman\AlertManager;
+use GlpiPlugin\Watchman\WatchmanCronHelper;
 
 
 if (!defined('GLPI_ROOT')) {
@@ -73,6 +74,10 @@ switch ($action) {
         
     case 'bulk_action':
         handleBulkAction($alertManager);
+        break;
+
+    case 'start_cron':
+        handleStartCron($alertManager);
         break;
         
     default:
@@ -248,6 +253,25 @@ function handleMarkAsPatched($alertManager) {
             throw new Exception('Erreur lors de la mise à jour');
         }
         
+    } catch (Exception $e) {
+        http_response_code(500);
+        echo json_encode([
+            'error' => 'Erreur lors de la mise à jour du statut',
+            'message' => $e->getMessage()
+        ]);
+    }
+}
+
+
+function handleStartCron($alertManager) {
+    try {
+        
+        // $alertManager->startCron();
+        WatchmanCronHelper::registerOnce('manual_cron_start','GlpiPlugin\Watchman\AlertManager::startCron');
+        echo json_encode([
+            'success' => true,
+            'message' => 'Tache cron lancéé avec succès'
+        ]);
     } catch (Exception $e) {
         http_response_code(500);
         echo json_encode([

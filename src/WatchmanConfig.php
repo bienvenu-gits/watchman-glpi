@@ -183,7 +183,7 @@ class WatchmanConfig extends CommonDBTM
      * @param  $input
      * @return void
      */
-  public static  function saveConfig($input)
+  public static  function saveConfig($input,$is_form=true)
     {
         global $DB;
 
@@ -205,7 +205,9 @@ class WatchmanConfig extends CommonDBTM
             "api_last_check",
             "circuit_breaker_state",
             "circuit_breaker_failures",
-            "last_failure_time"
+            "last_failure_time",
+            "last_alerts_sync_date",
+            'show_welcome'
         ];
 
         foreach ($config_fields as $field) {
@@ -240,7 +242,10 @@ class WatchmanConfig extends CommonDBTM
             }
         }
 
+        if($is_form){
         Session::addMessageAfterRedirect(__('Configuration sauvegardée', 'watchman'));
+        }
+
     }
 
     /**

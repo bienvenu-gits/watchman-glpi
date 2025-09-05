@@ -87,7 +87,6 @@ function plugin_watchman_install()
    //taches cron
    CronSyncAlert::installCronTasks();
    // CronSyncAlert::installCronTasks();
-   CronManager::installCronTasks();
 
 
    return true;

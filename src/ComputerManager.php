@@ -68,8 +68,6 @@ class ComputerManager extends CommonDBTM
 
     function startCron()
     {
-        // CronSyncComputer::manualSyncComputers();
-
-        CronSyncAlert::manualSyncAlerts();
+        CronSyncComputer::manualSyncComputers();
     }
 }

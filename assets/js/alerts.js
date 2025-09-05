@@ -481,16 +481,47 @@ class WatchmanAlertsManager {
      */
 
     async startAlertCron() {
-        
+        if(!confirm('Voulez-vous vraiment lancer la synchronisation des alertes ? Cette action peut prendre plusieurs minutes.')) {
+            return;
+        }
         try {
-            const response = this.makeRequest('start_cron', null, 'POST', {
+           const response=await this.makeRequest('start_cron', null, 'POST', {
                 _glpi_csrf_token: window.csrf_token
             });
-            this.showNotification('Le cron est lancé en arrière plan', 'success');
+
+            console.log('response',response);
+            this.showNotification('La synchronisation des alertes a été lancée. Veuillez actualiser la page après quelques minutes pour voir les nouvelles alertes.', 'success');
+            // console.log(response);
         } catch (error) {
             console.error('Erreur lors de la suppression:', error);
             this.showNotification('Erreur lors de la suppression', 'error');
         }
+    }
+
+
+     /**
+     * Affiche une notification
+     */
+    showNotification(message, type = 'info') {
+        // Utilisation d'une notification simple ou intégration avec le système de notification de GLPI
+        const alertClass = type === 'success' ? 'alert-success' : 
+                          type === 'error' ? 'alert-danger' : 'alert-info';
+        
+        const notification = $(`
+            <div class="alert ${alertClass} alert-dismissible fade show" role="alert" style="position: fixed; top: 20px; right: 20px; z-index: 9999; min-width: 300px;">
+                ${message}
+                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+        `);
+        
+        $('body').append(notification);
+        
+        // Auto-suppression après 5 secondes
+        setTimeout(() => {
+            notification.fadeOut(() => notification.remove());
+        }, 5000);
     }
     
     /**
@@ -690,6 +721,7 @@ class WatchmanAlertsManager {
         const options = {
             method: method,
             headers: {
+                'Content-Type': 'application/json',
                 'X-Requested-With': 'XMLHttpRequest'
             }
         };
@@ -703,14 +735,57 @@ class WatchmanAlertsManager {
         }
         
         const response = await fetch(url, options);
-        // const response_text=await response.text();
-        // console.log(response_text);
+        // if(action==='start_cron'){
+        //     const response_text=await response.text();
+        //     console.log(response_text);
+        // }
+        
         
         if (!response.ok) {
             throw new Error(`HTTP ${response.status}: ${response.statusText}`);
         }
         
         return await response.json();
+    }
+
+
+
+    /**
+     * Effectue une requête AJAX
+     */
+    async makeAsyncRequest(action, params = null, method = 'GET', data = null) {
+        // const url = new URL(`${window.location.origin}${window.location.pathname.replace(/\/[^\/]*$/, '')}/ajax/alerts.php`);
+        const urlStr=`${window.location.origin}${WATCHMAN_CONFIG.ajaxUrl}`;
+        console.log(urlStr);
+        const url = new URL(`${urlStr}`);
+        url.searchParams.set('action', action);
+        
+        if (params && method === 'GET') {
+            for (const [key, value] of params.entries()) {
+                if (value !== '' && value !== null) {
+                    url.searchParams.set(key, value);
+                }
+            }
+        }
+        
+        const options = {
+            method: method,
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        };
+        
+        if (method === 'POST' && data) {
+            const formData = new FormData();
+            for (const [key, value] of Object.entries(data)) {
+                formData.append(key, value);
+            }
+            options.body = formData;
+        }
+        
+        fetch(url, options);
+        
     }
     
     /**
@@ -737,27 +812,27 @@ class WatchmanAlertsManager {
     /**
      * Affiche une notification
      */
-    showNotification(message, type = 'info') {
-        // Utilisation du système de notification de GLPI si disponible
-        if (window.glpi_toast_info) {
-            switch (type) {
-                case 'success':
-                    window.glpi_toast_info(message);
-                    break;
-                case 'error':
-                    window.glpi_toast_error(message);
-                    break;
-                case 'warning':
-                    window.glpi_toast_warning(message);
-                    break;
-                default:
-                    window.glpi_toast_info(message);
-            }
-        } else {
-            // Fallback avec alert
-            alert(message);
-        }
-    }
+    // showNotification(message, type = 'info') {
+    //     // Utilisation du système de notification de GLPI si disponible
+    //     if (window.glpi_toast_info) {
+    //         switch (type) {
+    //             case 'success':
+    //                 window.glpi_toast_info(message);
+    //                 break;
+    //             case 'error':
+    //                 window.glpi_toast_error(message);
+    //                 break;
+    //             case 'warning':
+    //                 window.glpi_toast_warning(message);
+    //                 break;
+    //             default:
+    //                 window.glpi_toast_info(message);
+    //         }
+    //     } else {
+    //         // Fallback avec alert
+    //         alert(message);
+    //     }
+    // }
 }
 
 /**

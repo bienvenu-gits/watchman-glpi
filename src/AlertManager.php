@@ -73,10 +73,12 @@ class AlertManager extends CommonDBTM
     }
 
 
-    function startCron()
+    public static function startCron()
     {
         // CronSyncComputer::manualSyncComputers();
         CronSyncAlert::manualSyncAlerts();
+
+        return true;
     }
 
 
@@ -1445,11 +1447,7 @@ class AlertManager extends CommonDBTM
 
             // Log de l'activité
             $action = $is_new ? 'created' : 'updated';
-            $this->logAlertActivity(
-                $stored_alert_id,
-                $action,
-                sprintf(__('Alerte %s depuis l\'API', 'watchman'), $is_new ? 'créée' : 'mise à jour')
-            );
+            
 
             return [
                 'success' => true,
@@ -1495,11 +1493,7 @@ class AlertManager extends CommonDBTM
 
             if ($result) {
                 // Log de l'activité
-                $this->logAlertActivity(
-                    $alert_id,
-                    'ticket_linked',
-                    sprintf(__('Alerte liée au ticket #%d', 'watchman'), $ticket_id)
-                );
+               
 
                 return [
                     'success' => true,
@@ -1873,29 +1867,6 @@ class AlertManager extends CommonDBTM
         return md5($stack_id . ':' . $description);
     }
 
-    /**
-     * Log d'activité pour une alerte
-     * 
-     * @param string $alert_id
-     * @param string $action
-     * @param string $message
-     */
-    private function logAlertActivity($alert_id, $action, $message)
-    {
-        global $DB;
-
-        try {
-            $DB->insert('glpi_plugin_watchman_alert_logs', [
-                'alerts_id' => $alert_id,
-                'action' => $DB->escape($action),
-                'message' => $DB->escape($message),
-                'users_id' => Session::getLoginUserID(),
-                'date_creation' => date('Y-m-d H:i:s')
-            ]);
-        } catch (Exception $e) {
-            Toolbox::logInFile('watchman_log_error', "Erreur log activité: " . $e->getMessage());
-        }
-    }
 
     /**
      * Traitement de l'impact CVE

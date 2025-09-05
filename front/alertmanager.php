@@ -14,6 +14,7 @@ Html::header(
     WatchmanManager::class,
     "watchmanmanager"
 );
+// GlpiPlugin\Watchman\AlertManager::startCron();
 $alert_id=$_GET['alert_id'] ?? null;
 $dashboard_manager->showAlerts($alert_id);
 Html::footer();
