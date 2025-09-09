@@ -73,7 +73,7 @@ function plugin_init_watchman()
 function plugin_version_watchman()
 {
     return [
-        'name'           => 'watchman',
+        'name'           => 'Watchman',
         'version'        => PLUGIN_WATCHMAN_VERSION,
         'author'         => '<a href="http://www.gits.bj">Global It Service</a>',
         'license'        => '',

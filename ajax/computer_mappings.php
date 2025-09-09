@@ -7,6 +7,7 @@
 use Glpi\Http\Response;
 use GlpiPlugin\Watchman\ComputerManager;
 use GlpiPlugin\Watchman\WatchmanCronHelper;
+use GlpiPlugin\Watchman\WatchmanProfile;
 
 if (!defined('GLPI_ROOT')) {
     define('GLPI_ROOT', dirname(__DIR__, 3));
@@ -14,6 +15,9 @@ if (!defined('GLPI_ROOT')) {
 define('GLPI_KEEP_CSRF_TOKEN', true);
 
 include GLPI_ROOT . "/inc/includes.php";
+
+// Vérifier l'accès à l'administration des ordinateurs
+WatchmanProfile::checkRightOr403(WatchmanProfile::RIGHT_WATCHMAN_ADMIN, WatchmanProfile::READ);
 
 // Vérification des droits d'accès
 // Session::checkRight("plugin_watchman_computer", READ);

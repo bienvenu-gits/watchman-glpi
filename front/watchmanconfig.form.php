@@ -1,9 +1,13 @@
 <?php
 
 use GlpiPlugin\Watchman\WatchmanConfig;
+use GlpiPlugin\Watchman\WatchmanProfile;
 // use Html;
 
 include ('../../../inc/includes.php');
+
+// Vérifier les droits de configuration
+WatchmanProfile::checkRightOr403(WatchmanProfile::RIGHT_WATCHMAN_CONFIG, WatchmanProfile::UPDATE);
 
 $config = new WatchmanConfig();
 if (isset($_POST["update"])) {

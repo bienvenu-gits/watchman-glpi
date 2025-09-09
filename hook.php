@@ -35,6 +35,7 @@ use GlpiPlugin\Watchman\CronMigration;
 use GlpiPlugin\Watchman\CronSyncAlert;
 use GlpiPlugin\Watchman\CronSyncComputer;
 use GlpiPlugin\Watchman\WatchmanConfig;
+use GlpiPlugin\Watchman\WatchmanProfile;
 
 /**
  * Plugin install process
@@ -59,6 +60,9 @@ function plugin_watchman_install()
    //taches cron
    CronSyncAlert::installCronTasks();
    CronSyncComputer::installCronTasks();
+
+   // Installation des droits du plugin
+   WatchmanProfile::installRights();
 
    return true;
 }
@@ -101,6 +105,10 @@ function plugin_watchman_uninstall()
    CronSyncAlert::uninstallCronTasks();
    CronSyncComputer::uninstallCronTasks();
    CronManager::uninstallCronTasks();
+   
+   // Désinstallation des droits du plugin
+   // WatchmanProfile::uninstallRights();
+   
    return true;
 }
 

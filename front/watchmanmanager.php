@@ -2,10 +2,14 @@
 
 use GlpiPlugin\Watchman\WatchmanConfig;
 use GlpiPlugin\Watchman\WatchmanManager;
+use GlpiPlugin\Watchman\WatchmanProfile;
 // use Search;
 // use Html;
 
 include ('../../../inc/includes.php');
+
+// Vérifier l'accès au plugin
+WatchmanProfile::checkPluginAccess();
 $dashboard_manager = new WatchmanManager();
 global $CFG_GLPI;
 Html::header(

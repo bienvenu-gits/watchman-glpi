@@ -99,6 +99,11 @@ class WatchmanManager extends CommonDBTM
      */
     static function getMenuContent()
     {
+        // Vérifier si l'utilisateur a accès au plugin
+        if (!\GlpiPlugin\Watchman\WatchmanProfile::canView()) {
+            return [];
+        }
+
         $title  = self::getMenuName(Session::getPluralNumber());
         $search = self::getSearchURL(false);
 
@@ -114,6 +119,45 @@ class WatchmanManager extends CommonDBTM
                 ]
             ]
         ];
+
+        // Ajouter des sous-menus selon les droits
+        if (\GlpiPlugin\Watchman\WatchmanProfile::canView()) {
+            $menu['options']['alerts'] = [
+                'title' => __('Alertes', 'watchman'),
+                'page'  => '/plugins/watchman/front/alertmanager.php',
+                'links' => [
+                    'search' => '/plugins/watchman/front/alertmanager.php'
+                ]
+            ];
+        }
+
+        if (\GlpiPlugin\Watchman\WatchmanProfile::canAdmin()) {
+            $menu['options']['computers'] = [
+                'title' => __('Ordinateurs synchronisés', 'watchman'),
+                'page'  => '/plugins/watchman/front/computermapping.php',
+                'links' => [
+                    'search' => '/plugins/watchman/front/computermapping.php'
+                ]
+            ];
+        }
+
+        if (\GlpiPlugin\Watchman\WatchmanProfile::canConfigure()) {
+            $menu['options']['config'] = [
+                'title' => __('Configuration', 'watchman'),
+                'page'  => '/plugins/watchman/front/watchmanconfig.form.php',
+                'links' => [
+                    'add' => '/plugins/watchman/front/watchmanconfig.form.php'
+                ]
+            ];
+            
+            $menu['options']['profiles'] = [
+                'title' => __('Gestion des profils', 'watchman'),
+                'page'  => '/plugins/watchman/front/watchmanprofile.form.php',
+                'links' => [
+                    'config' => '/plugins/watchman/front/watchmanprofile.form.php'
+                ]
+            ];
+        }
 
         return $menu;
     }

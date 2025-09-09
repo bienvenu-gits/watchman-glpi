@@ -7,6 +7,7 @@
 use Glpi\Http\Response;
 use GlpiPlugin\Watchman\AlertManager;
 use GlpiPlugin\Watchman\WatchmanCronHelper;
+use GlpiPlugin\Watchman\WatchmanProfile;
 
 
 if (!defined('GLPI_ROOT')) {
@@ -16,6 +17,8 @@ define('GLPI_KEEP_CSRF_TOKEN', true);
 
 include GLPI_ROOT . "/inc/includes.php";
 
+// Vérifier l'accès aux alertes
+WatchmanProfile::checkPluginAccess();
 
 // Vérification des droits d'accès
 // Session::checkRight("plugin_watchman_alert", READ);
@@ -49,34 +52,43 @@ $action = $_REQUEST['action'] ?? '';
 // Instance du gestionnaire d'alertes
 $alertManager = new AlertManager();
 
-// Gestion des différentes actions
+// Gestion des différentes actions avec vérifications de droits
 switch ($action) {
     
     case 'get_alerts':
-        handleGetAlerts($alertManager);
-        break;
-        
     case 'get_stats':
-        handleGetStats($alertManager);
+        // Actions de lecture - nécessite le droit de voir les alertes
+        WatchmanProfile::checkRightOr403(WatchmanProfile::RIGHT_WATCHMAN_VIEW, WatchmanProfile::READ);
+        if ($action === 'get_alerts') {
+            handleGetAlerts($alertManager);
+        } else {
+            handleGetStats($alertManager);
+        }
         break;
         
     case 'mark_as_patched':
-        handleMarkAsPatched($alertManager);
-        break;
-        
     case 'create_ticket':
-        handleCreateTicket($alertManager);
+    case 'bulk_action':
+        // Actions de modification - nécessite le droit de gérer les alertes
+        WatchmanProfile::checkRightOr403(WatchmanProfile::RIGHT_WATCHMAN_MANAGE, WatchmanProfile::UPDATE);
+        if ($action === 'mark_as_patched') {
+            handleMarkAsPatched($alertManager);
+        } elseif ($action === 'create_ticket') {
+            handleCreateTicket($alertManager);
+        } else {
+            handleBulkAction($alertManager);
+        }
         break;
         
     case 'delete_alert':
+        // Suppression - nécessite des droits admin ou de suppression
+        WatchmanProfile::checkRightOr403(WatchmanProfile::RIGHT_WATCHMAN_MANAGE, WatchmanProfile::DELETE);
         handleDeleteAlert($alertManager);
-        break;
-        
-    case 'bulk_action':
-        handleBulkAction($alertManager);
         break;
 
     case 'start_cron':
+        // Gestion des crons - nécessite des droits cron
+        WatchmanProfile::checkRightOr403(WatchmanProfile::RIGHT_WATCHMAN_CRON, WatchmanProfile::UPDATE);
         handleStartCron($alertManager);
         break;
         
