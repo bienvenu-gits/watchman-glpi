@@ -1,0 +1,803 @@
+{# Template de détail d'un ordinateur synchronisé #}
+{# Ce template s'intègre dans la structure HTML existante de GLPI #}
+
+{# CSS spécifique au plugin #}
+{% block plugin_styles %}
+<link rel="stylesheet" type="text/css" href="{{ base_url }}/plugins/watchman/assets/css/icons.css"> 
+<link rel="stylesheet" type="text/css" href="{{ base_url }}/plugins/watchman/assets/css/tailwind.css">
+<link rel="stylesheet" type="text/css" href="{{ base_url }}/plugins/watchman/assets/css/cms_watchman.css">
+<style>
+	.computer-detail-card {
+		margin-bottom: 20px;
+	}
+	.cms_watchman_card {
+		background: #fff;
+		border-radius: 8px;
+		box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+		margin-bottom: 20px;
+	}
+	.cms_watchman_card_header {
+		background: #f8f9fa;
+		border-bottom: 1px solid #dee2e6;
+		border-radius: 8px 8px 0 0;
+		padding: 15px 20px;
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+	}
+	.cms_watchman_card_header h3 {
+		margin: 0;
+		font-size: 1.1rem;
+		font-weight: 600;
+		color: #495057;
+	}
+	.cms_watchman_card_body {
+		padding: 20px;
+	}
+	.cms_watchman_content_main_header {
+		background: #fff;
+		border-radius: 8px;
+		padding: 20px;
+		margin-bottom: 20px;
+		box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+	}
+	.cms_watchman_content_main_header h1 {
+		margin: 0;
+		font-size: 1.5rem;
+		color: #495057;
+	}
+	.computer-info-row {
+		margin-bottom: 10px;
+	}
+	.computer-info-label {
+		font-weight: bold;
+		color: #666;
+		min-width: 120px;
+		display: inline-block;
+	}
+	.computer-info-value {
+		color: #333;
+	}
+	.application-alerts-toggle {
+		cursor: pointer;
+		color: #dc3545;
+		font-weight: bold;
+	}
+	.application-alerts-toggle:hover {
+		color: #c82333;
+	}
+	.application-alerts-row {
+		background-color: #f8f9fa;
+		border-left: 4px solid #dee2e6;
+	}
+	.application-alerts-table {
+		background-color: #ffffff;
+		margin: 10px 0;
+		border-radius: 5px;
+		box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+	}
+	.cms_watchman_content_loading {
+		text-align: center;
+		padding: 50px;
+	}
+	.cms_watchman_loading {
+		display: inline-block;
+		width: 40px;
+		height: 40px;
+		border: 3px solid #f3f3f3;
+		border-top: 3px solid #3498db;
+		border-radius: 50%;
+		animation: spin 1s linear infinite;
+	}
+	@keyframes spin {
+		0% { transform: rotate(0deg); }
+		100% { transform: rotate(360deg); }
+	}
+	.alert-severity-CRITICAL { color: #dc3545; font-weight: bold; }
+	.alert-severity-HIGH { color: #fd7e14; font-weight: bold; }
+	.alert-severity-MEDIUM { color: #ffc107; }
+	.alert-severity-LOW { color: #28a745; }
+	.cms_watchman_pagination_buttons {
+		display: flex;
+		gap: 5px;
+		align-items: center;
+		justify-content: center;
+		margin-top: 20px;
+		flex-wrap: wrap;
+	}
+	.cms_watchman_pagination {
+		margin-top: 20px;
+		text-align: center;
+	}
+	.cms_watchman_pagination_container {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		margin-top: 20px;
+		padding: 15px 0;
+	}
+	.cms_watchman_pagination_total {
+		font-weight: 500;
+		color: #495057;
+	}
+	.cms_watchman_pagination_display {
+		display: flex;
+		align-items: center;
+		gap: 10px;
+	}
+	.cms_watchman_pagination_number {
+		min-width: 60px;
+		text-align: center;
+		font-weight: 500;
+		color: #495057;
+	}
+	
+	/* Badges pour les statuts */
+	.badge {
+		padding: 0.375rem 0.75rem;
+		border-radius: 0.25rem;
+		font-size: 0.875em;
+		font-weight: 500;
+	}
+	.badge-success {
+		color: #fff;
+		background-color: #28a745;
+	}
+	.badge-warning {
+		color: #212529;
+		background-color: #ffc107;
+	}
+	.badge-danger {
+		color: #fff;
+		background-color: #dc3545;
+	}
+	.badge-secondary {
+		color: #fff;
+		background-color: #6c757d;
+	}
+</style>
+{% endblock %}
+
+{# Token CSRF pour les requêtes AJAX #}
+<input type="hidden" name="_glpi_csrf_token" value="{{ csrf_token }}">
+
+<div class="plugin-container">
+	{# Navbar du plugin #}
+	{% block navbar %}
+		{% include '@watchman/components/navbar.html.twig' %}
+	{% endblock %}
+
+	<div data-layout-mode="light" class="cms_watchman">
+		<div class="cms_watchman_container cms_watchman_page_content">
+			
+			<!-- Loading State -->
+			<div class="cms_watchman_content_loading">
+				<span class="cms_watchman_loading"></span>
+				<p>{{ __('Chargement des détails de l\'ordinateur...', 'watchman') }}</p>
+			</div>
+
+			<!-- Main Content -->
+			<div class="cms_watchman_content_main_body hidden">
+				<!-- Header -->
+				<div class="cms_watchman_content_main_header">
+					<h1 id="computer_detail_title">{{ __('Détails de l\'ordinateur', 'watchman') }}</h1>
+					<div class="cms_watchman_btn-group">
+						<a href="{{ base_url }}/plugins/watchman/front/computermapping.php" class="cms_watchman_btn cms_watchman_btn-outline-secondary btn-sm">
+							<i class="fas fa-arrow-left me-1"></i>
+							{{ __('Retour à la liste', 'watchman') }}
+						</a>
+					</div>
+				</div>
+
+				<!-- Première carte : Informations de base -->
+				<div class="cms_watchman_card computer-detail-card">
+					<div class="cms_watchman_card_header">
+						<h3>{{ __('Informations de base', 'watchman') }}</h3>
+					</div>
+					<div class="cms_watchman_card_body" id="computer_basic_info">
+						<!-- Contenu chargé via AJAX -->
+					</div>
+				</div>
+
+				<!-- Deuxième carte : Applications -->
+				<div class="cms_watchman_card computer-detail-card">
+					<div class="cms_watchman_card_header">
+						<h3>{{ __('Applications installées', 'watchman') }}</h3>
+						<div class="cms_watchman_btn-group">
+							<button type="button" class="cms_watchman_btn cms_watchman_btn-primary btn-sm" onclick="location.reload()">
+								<i class="fas fa-sync me-1"></i>
+								{{ __('Actualiser', 'watchman') }}
+							</button>
+						</div>
+					</div>
+					<div class="cms_watchman_card_body">
+						<!-- Tableau des applications -->
+						<div class="cms_watchman_table_container">
+							<table class="cms_watchman_table" id="computer_applications_table">
+								<thead>
+									<tr>
+										<th width="5%">{{ __('Statut', 'watchman') }}</th>
+										<th width="40%">{{ __('Nom', 'watchman') }}</th>
+										<th width="20%">{{ __('Version', 'watchman') }}</th>
+										<th width="20%">{{ __('Editeur', 'watchman') }}</th>
+										<th width="15%">{{ __('Alertes', 'watchman') }}</th>
+									</tr>
+								</thead>
+								<tbody id="computer_applications_table_body">
+									<!-- Les données seront chargées via AJAX -->
+								</tbody>
+							</table>
+						</div>
+
+						<!-- Pagination des applications -->
+						<div class="cms_watchman_pagination_container" id="computer_applications_pagination">
+							<div class="cms_watchman_pagination_total">
+								{{ __('Total', 'watchman') }}: <span id="applications_total_count">0</span> {{ __('applications', 'watchman') }}
+							</div>
+							<div class="cms_watchman_pagination_display">
+								<button class="cms_watchman_pagination_preview_button cms_watchman_btn cms_watchman_btn-primary" id="applications_prev_btn">
+									<i class="fa fa-chevron-left"></i>
+								</button>
+								<span class="cms_watchman_pagination_number" id="applications_page_info">1 / 1</span>
+								<button class="cms_watchman_pagination_next_button cms_watchman_btn cms_watchman_btn-primary" id="applications_next_btn">
+									<i class="fa fa-chevron-right"></i>
+								</button>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+
+{# Scripts JavaScript #}
+{% block plugin_scripts %}
+<script>
+// Configuration globale
+const CMS_WATCHMAN_DETAIL_CONFIG = {
+    ajaxUrl: '{{ base_url }}/plugins/watchman/ajax/computer_detail.php',
+    csrfToken: '{{ csrf_token }}',
+    baseUrl: '{{ base_url }}',
+    computerId: new URLSearchParams(window.location.search).get('computer_id'),
+    translations: {
+        loading: '{{ __("Chargement...", "watchman") }}',
+        error: '{{ __("Erreur", "watchman") }}',
+        success: '{{ __("Succès", "watchman") }}',
+        noApplications: '{{ __("Aucune application trouvée", "watchman") }}',
+        showAlerts: '{{ __("Voir les alertes", "watchman") }}',
+        hideAlerts: '{{ __("Masquer les alertes", "watchman") }}',
+        noAlerts: '{{ __("Aucune alerte", "watchman") }}'
+    }
+};
+
+// Variables globales
+let computer_applications_data = [];
+let computer_current_page = 1;
+let computer_total_pages = 1;
+let expanded_applications = new Set(); // Applications avec alertes affichées
+
+/**
+ * Initialisation de la page
+ */
+document.addEventListener('DOMContentLoaded', function() {
+    if (!CMS_WATCHMAN_DETAIL_CONFIG.computerId) {
+        alert('ID d\'ordinateur manquant');
+        window.location.href = CMS_WATCHMAN_DETAIL_CONFIG.baseUrl + '/plugins/watchman/front/computermapping.php';
+        return;
+    }
+    
+    cms_watchman_init_computer_detail_page();
+});
+
+/**
+ * Initialise la page de détail
+ */
+function cms_watchman_init_computer_detail_page() {
+    // Masquer le loading et afficher le contenu principal
+    setTimeout(() => {
+        document.querySelector('.cms_watchman_content_loading').style.display = 'none';
+        document.querySelector('.cms_watchman_content_main_body').classList.remove('hidden');
+        
+        // Charger les données
+        cms_watchman_load_computer_basic_info();
+        cms_watchman_load_computer_applications();
+    }, 500);
+}
+
+/**
+ * Charge les informations de base de l'ordinateur
+ */
+async function cms_watchman_load_computer_basic_info() {
+    try {
+        const response = await fetch(`${CMS_WATCHMAN_DETAIL_CONFIG.ajaxUrl}?action=get_computer_info&computer_id=${CMS_WATCHMAN_DETAIL_CONFIG.computerId}`, {
+            method: 'GET',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        });
+        
+        if (!response.ok) {
+            throw new Error('Erreur réseau');
+        }
+        
+        const data = await response.json();
+        
+        if (data.success && data.data) {
+            const computer = data.data;
+            
+            console.log('Computer data received:', computer);
+            
+            // Mettre à jour le titre avec le vrai nom de l'ordinateur
+            const computerName = computer.computer_name || computer.external_id || `Ordinateur #${computer.id}`;
+            document.getElementById('computer_detail_title').textContent = 
+                `Détails de ${computerName}`;
+            
+            // Afficher les vraies informations de l'ordinateur
+            const ipAddresses = computer.ip_addresses && computer.ip_addresses.length > 0 
+                ? computer.ip_addresses.join(', ') 
+                : 'Aucune adresse IP';
+                
+            document.getElementById('computer_basic_info').innerHTML = `
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="computer-info-row">
+                            <span class="computer-info-label">Nom :</span>
+                            <span class="computer-info-value"><strong>${computer.computer_name ?? 'Non défini'}</strong></span>
+                        </div>
+                        <div class="computer-info-row">
+                            <span class="computer-info-label">Numéro de série :</span>
+                            <span class="computer-info-value">${computer.serial ?? 'Non défini'}</span>
+                        </div>
+                        <div class="computer-info-row">
+                            <span class="computer-info-label">UUID :</span>
+                            <span class="computer-info-value"><code>${computer.uuid ?? 'Non défini'}</code></span>
+                        </div>
+                        <div class="computer-info-row">
+                            <span class="computer-info-label">Fabricant :</span>
+                            <span class="computer-info-value">${computer.manufacturer_name ?? 'Non défini'}</span>
+                        </div>
+                        <div class="computer-info-row">
+                            <span class="computer-info-label">Modèle :</span>
+                            <span class="computer-info-value">${computer.computer_model_name ?? 'Non défini'}</span>
+                        </div>
+                        <div class="computer-info-row">
+                            <span class="computer-info-label">Type :</span>
+                            <span class="computer-info-value">${computer.computer_type_name ?? 'Non défini'}</span>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="computer-info-row">
+                            <span class="computer-info-label">Adresses IP :</span>
+                            <span class="computer-info-value"><code>${ipAddresses}</code></span>
+                        </div>
+                        <div class="computer-info-row">
+                            <span class="computer-info-label">Emplacement :</span>
+                            <span class="computer-info-value">${computer.location_name ?? 'Non défini'}</span>
+                        </div>
+                        <div class="computer-info-row">
+                            <span class="computer-info-label">État :</span>
+                            <span class="computer-info-value">${computer.state_name ?? 'Non défini'}</span>
+                        </div>
+                        <div class="computer-info-row">
+                            <span class="computer-info-label">Contact :</span>
+                            <span class="computer-info-value">${computer.contact ?? 'Non défini'}</span>
+                        </div>
+                        <div class="computer-info-row">
+                            <span class="computer-info-label">Statut Sync :</span>
+                            <span class="computer-info-value">
+                                <span class="badge badge-${cms_watchman_get_sync_status_color(computer.sync_status)}">
+                                    ${cms_watchman_render_sync_status_text(computer.sync_status ?? 'unknown')}
+                                </span>
+                            </span>
+                        </div>
+                        <div class="computer-info-row">
+                            <span class="computer-info-label">Dernière Sync :</span>
+                            <span class="computer-info-value">${computer.last_sync_date ? new Date(computer.last_sync_date).toLocaleString('fr-FR') : 'Jamais'}</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+        } else {
+            throw new Error(data.error || 'Erreur lors du chargement');
+        }
+        
+    } catch (error) {
+        console.error('Erreur:', error);
+        document.getElementById('computer_basic_info').innerHTML = `
+            <div class="alert alert-danger">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                Erreur lors du chargement des informations : ${error.message}
+            </div>
+        `;
+    }
+}
+
+/**
+ * Charge les applications de l'ordinateur
+ */
+async function cms_watchman_load_computer_applications(page = 1) {
+    try {
+        const params = new URLSearchParams({
+            action: 'get_computer_applications',
+            computer_id: CMS_WATCHMAN_DETAIL_CONFIG.computerId,
+            page: page,
+            per_page: 20
+        });
+        
+        const response = await fetch(`${CMS_WATCHMAN_DETAIL_CONFIG.ajaxUrl}?${params}`, {
+            method: 'GET',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        });
+        
+        if (!response.ok) {
+            throw new Error('Erreur réseau');
+        }
+        
+        const text_response = await response.text();
+        console.log('Applications response:', text_response);
+        
+        const data = JSON.parse(text_response);
+        
+        if (data.success) {
+            computer_applications_data = data.data;
+            computer_current_page = data.pagination.current_page;
+            computer_total_pages = data.pagination.total_pages;
+            
+            // Store pagination data globally
+            window.computer_pagination_data = data.pagination;
+            
+            console.log('Pagination data:', data.pagination);
+            console.log('Current page:', computer_current_page);
+            console.log('Total pages:', computer_total_pages);
+            console.log('Total applications:', data.pagination.total);
+            console.log('Applications count:', computer_applications_data.length);
+            
+            cms_watchman_render_applications_table();
+            cms_watchman_render_applications_pagination();
+        } else {
+            throw new Error(data.error || 'Erreur lors du chargement');
+        }
+        
+    } catch (error) {
+        console.error('Erreur:', error);
+        document.getElementById('computer_applications_table_body').innerHTML = `
+            <tr>
+                <td colspan="5" style="text-align: center; padding: 40px;">
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        Erreur lors du chargement des applications : ${error.message}
+                    </div>
+                </td>
+            </tr>
+        `;
+    }
+}
+
+/**
+ * Rend le tableau des applications
+ */
+function cms_watchman_render_applications_table() {
+    const tbody = document.getElementById('computer_applications_table_body');
+    
+    if (computer_applications_data.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="5" style="text-align: center; padding: 40px;">
+                    <div class="cms_watchman_content_empty">
+                        <h3>${CMS_WATCHMAN_DETAIL_CONFIG.translations.noApplications}</h3>
+                    </div>
+                </td>
+            </tr>
+        `;
+        return;
+    }
+    
+    let html = '';
+    computer_applications_data.forEach((app, index) => {
+        // Créer un ID unique basé sur le nom et la version
+        const uniqueId = `${app.name}-${app.version}`.replace(/[^a-zA-Z0-9]/g, '-');
+        const rowId = `app-row-${uniqueId}`;
+        const alertsRowId = `alerts-row-${uniqueId}`;
+        const isExpanded = expanded_applications.has(uniqueId);
+        
+        // Ligne principale de l'application
+        html += `
+            <tr id="${rowId}">
+                <td>
+                    <i class="fas fa-desktop text-primary"></i>
+                </td>
+                <td>
+                    <strong>${app.name || 'Application inconnue'}</strong>
+                </td>
+                <td>
+                    <code>${app.version || 'Non définie'}</code>
+                </td>
+                <td>
+                    ${app.publisher || 'Non défini'}
+                </td>
+                <td>
+                    ${cms_watchman_render_application_alerts_count(app, uniqueId)}
+                </td>
+            </tr>
+        `;
+        
+        // Ligne des alertes (masquée par défaut)
+        if (isExpanded) {
+            html += `
+                <tr id="${alertsRowId}" class="application-alerts-row">
+                    <td colspan="5">
+                        <div class="application-alerts-table" id="alerts-table-${uniqueId}">
+                            <div class="cms_watchman_content_loading">
+                                <span class="cms_watchman_loading"></span>
+                                <p>Chargement des alertes...</p>
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        }
+    });
+    
+    tbody.innerHTML = html;
+    
+    // Charger les alertes pour les applications expanded
+    expanded_applications.forEach(uniqueId => {
+        const app = computer_applications_data.find(a => `${a.name}-${a.version}`.replace(/[^a-zA-Z0-9]/g, '-') === uniqueId);
+        if (app) {
+            cms_watchman_load_application_alerts(app, uniqueId);
+        }
+    });
+}
+
+/**
+ * Rend le compteur d'alertes d'une application
+ */
+function cms_watchman_render_application_alerts_count(app, uniqueId) {
+    const alertsCount = app.alerts_count || 0;
+    
+    if (alertsCount > 0) {
+        const isExpanded = expanded_applications.has(uniqueId);
+        const icon = isExpanded ? 'fa-chevron-up' : 'fa-chevron-down';
+        const text = isExpanded ? CMS_WATCHMAN_DETAIL_CONFIG.translations.hideAlerts : CMS_WATCHMAN_DETAIL_CONFIG.translations.showAlerts;
+        
+        return `
+            <span class="application-alerts-toggle" onclick="cms_watchman_toggle_application_alerts('${uniqueId}')" title="${text}">
+                <i class="fas fa-exclamation-triangle me-1"></i>
+                <strong>${alertsCount}</strong>
+                <i class="fas ${icon} ms-1"></i>
+            </span>
+        `;
+    } else {
+        return `<span class="text-muted">${CMS_WATCHMAN_DETAIL_CONFIG.translations.noAlerts}</span>`;
+    }
+}
+
+/**
+ * Affiche/masque les alertes d'une application
+ */
+function cms_watchman_toggle_application_alerts(uniqueId) {
+    const alertsRowId = `alerts-row-${uniqueId}`;
+    const alertsRow = document.getElementById(alertsRowId);
+    
+    if (expanded_applications.has(uniqueId)) {
+        // Masquer les alertes
+        expanded_applications.delete(uniqueId);
+        if (alertsRow) {
+            alertsRow.remove();
+        }
+    } else {
+        // Afficher les alertes
+        expanded_applications.add(uniqueId);
+        const app = computer_applications_data.find(a => `${a.name}-${a.version}`.replace(/[^a-zA-Z0-9]/g, '-') === uniqueId);
+        if (app) {
+            // Recréer la ligne des alertes
+            const appRowId = `app-row-${uniqueId}`;
+            const appRow = document.getElementById(appRowId);
+            if (appRow) {
+                const alertsRowHTML = `
+                    <tr id="${alertsRowId}" class="application-alerts-row">
+                        <td colspan="5">
+                            <div class="application-alerts-table" id="alerts-table-${uniqueId}">
+                                <div class="cms_watchman_content_loading">
+                                    <span class="cms_watchman_loading"></span>
+                                    <p>Chargement des alertes...</p>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+                appRow.insertAdjacentHTML('afterend', alertsRowHTML);
+                
+                // Charger les alertes
+                cms_watchman_load_application_alerts(app, uniqueId);
+            }
+        }
+    }
+    
+    // Mettre à jour l'icône
+    cms_watchman_render_applications_table();
+}
+
+/**
+ * Charge les alertes d'une application
+ */
+async function cms_watchman_load_application_alerts(app, uniqueId) {
+    try {
+        const params = new URLSearchParams({
+            action: 'get_application_alerts',
+            app_name: app.name,
+            app_version: app.version,
+            page: 1,
+            per_page: 10
+        });
+        
+        const response = await fetch(`${CMS_WATCHMAN_DETAIL_CONFIG.ajaxUrl}?${params}`, {
+            method: 'GET',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        });
+        
+        const data = await response.json();
+        const alertsContainer = document.getElementById(`alerts-table-${uniqueId}`);
+        
+        if (data.success && data.data && data.data.length > 0) {
+            let html = `
+                <table class="cms_watchman_table" style="margin: 0;">
+                    <thead>
+                        <tr>
+                            <th>CVE</th>
+                            <th>Titre</th>
+                            <th>Score</th>
+                            <th>Sévérité</th>
+                            <th>Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+            
+            data.data.forEach(alert => {
+                html += `
+                    <tr>
+                        <td><code>${alert.cves_id || 'N/A'}</code></td>
+                        <td>
+                            <div style="max-width: 300px; overflow: hidden; text-overflow: ellipsis;">
+                                ${alert.title || 'Sans titre'}
+                            </div>
+                        </td>
+                        <td>
+                            ${alert.score ? `<strong>${alert.score}/10</strong>` : 'N/A'}
+                        </td>
+                        <td>
+                            <span class="alert-severity-${alert.severity}">${alert.severity || 'UNKNOWN'}</span>
+                        </td>
+                        <td>
+                            ${alert.date_creation ? new Date(alert.date_creation).toLocaleDateString('fr-FR') : 'N/A'}
+                        </td>
+                    </tr>
+                `;
+            });
+            
+            html += `
+                    </tbody>
+                </table>
+            `;
+            
+            alertsContainer.innerHTML = html;
+        } else {
+            alertsContainer.innerHTML = `
+                <div style="padding: 20px; text-align: center; color: #666;">
+                    <i class="fas fa-info-circle me-2"></i>
+                    Aucune alerte trouvée pour cette application
+                </div>
+            `;
+        }
+        
+    } catch (error) {
+        console.error('Erreur:', error);
+        const alertsContainer = document.getElementById(`alerts-table-${uniqueId}`);
+        if (alertsContainer) {
+            alertsContainer.innerHTML = `
+                <div style="padding: 20px; text-align: center;" class="alert alert-danger">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    Erreur lors du chargement des alertes
+                </div>
+            `;
+        }
+    }
+}
+
+/**
+ * Utilitaire pour le rendu du statut
+ */
+function cms_watchman_render_sync_status_text(status) {
+    const statusConfig = {
+        'synced': 'Synchronisé',
+        'pending': 'En attente', 
+        'error': 'Erreur',
+        'unknown': 'Inconnu'
+    };
+    
+    return statusConfig[status] || 'Inconnu';
+}
+
+function cms_watchman_get_sync_status_color(status) {
+    const colorConfig = {
+        'synced': 'success',
+        'pending': 'warning', 
+        'error': 'danger',
+        'unknown': 'secondary'
+    };
+    
+    return colorConfig[status] || 'secondary';
+}
+
+/**
+ * Pagination des applications
+ */
+function cms_watchman_render_applications_pagination() {
+    console.log('Rendering pagination - Current:', computer_current_page, 'Total:', computer_total_pages);
+    
+    // Mettre à jour le compteur total
+    const totalElement = document.getElementById('applications_total_count');
+    const pageInfoElement = document.getElementById('applications_page_info');
+    const prevButton = document.getElementById('applications_prev_btn');
+    const nextButton = document.getElementById('applications_next_btn');
+    
+    if (!totalElement || !pageInfoElement || !prevButton || !nextButton) {
+        console.error('Pagination elements not found');
+        return;
+    }
+    
+    // Utiliser les données de pagination pour le total exact
+    let totalApplications = 0;
+    if (window.computer_pagination_data && window.computer_pagination_data.total) {
+        totalApplications = window.computer_pagination_data.total;
+    }
+    
+    totalElement.textContent = totalApplications;
+    pageInfoElement.textContent = `${computer_current_page} / ${computer_total_pages}`;
+    
+    // Gérer les boutons précédent/suivant
+    prevButton.disabled = computer_current_page <= 1;
+    nextButton.disabled = computer_current_page >= computer_total_pages;
+    
+    // Event listeners pour les boutons
+    prevButton.onclick = () => {
+        if (computer_current_page > 1) {
+            cms_watchman_load_computer_applications(computer_current_page - 1);
+        }
+    };
+    
+    nextButton.onclick = () => {
+        if (computer_current_page < computer_total_pages) {
+            cms_watchman_load_computer_applications(computer_current_page + 1);
+        }
+    };
+    
+    // Style des boutons désactivés
+    if (prevButton.disabled) {
+        prevButton.style.opacity = '0.5';
+        prevButton.style.cursor = 'not-allowed';
+    } else {
+        prevButton.style.opacity = '1';
+        prevButton.style.cursor = 'pointer';
+    }
+    
+    if (nextButton.disabled) {
+        nextButton.style.opacity = '0.5';
+        nextButton.style.cursor = 'not-allowed';
+    } else {
+        nextButton.style.opacity = '1';
+        nextButton.style.cursor = 'pointer';
+    }
+}
+
+</script>
+{% endblock %}

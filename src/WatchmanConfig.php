@@ -17,8 +17,8 @@ class WatchmanConfig extends CommonDBTM
     static $rightname = 'plugin_watchman_config';
     static $api_base_url= 'http://localhost:8000/api/v2/';
 
-    // const BASE_URL = "http://localhost:8022/api/v2/";
-    const BASE_URL = "https://api.watchman.bj/api/v2/";
+    const BASE_URL = "http://localhost:8022/api/v2/";
+    // const BASE_URL = "https://api.watchman.bj/api/v2/";
 
     /**
      *  Name of the itemtype

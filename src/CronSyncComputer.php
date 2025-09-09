@@ -111,15 +111,15 @@ class CronSyncComputer extends CronManager
 
             // Préparer le payload avec toutes les machines
             $assets_payload = self::prepareAssetsPayload($computers_to_sync);
-
-            if (empty($assets_payload['assets'])) {
+            $assets_cleaned = self::cleanAssetsStrict($assets_payload);
+            if (empty($assets_cleaned['assets'])) {
                 $task->log(__('Aucune donnée valide à synchroniser', 'watchman'));
                 return 1;
             }
 
             // Envoyer tout le lot à l'API
             try {
-                $response = $api_client->syncAssets($assets_payload);
+                $response = $api_client->syncAssets($assets_cleaned);
 
                 if ($response['success']) {
                     $processed = count($assets_payload['assets']);
@@ -136,9 +136,9 @@ class CronSyncComputer extends CronManager
                     $task->log(__('Erreur lors de la synchronisation: ', 'watchman') . $response['error']);
 
                     // Marquer tous comme en erreur
-                    foreach ($computers_to_sync as $computer_data) {
-                        self::updateComputerSyncStatus($computer_data['id'], 'error', $response['error']);
-                    }
+                    // foreach ($computers_to_sync as $computer_data) {
+                    //     self::updateComputerSyncStatus($computer_data['id'], 'error', $response['error']);
+                    // }
                 }
             } catch (Exception $e) {
                 $errors = count($computers_to_sync);
@@ -147,9 +147,9 @@ class CronSyncComputer extends CronManager
                 Toolbox::logInFile('watchman_cron_error', $error_msg);
 
                 // Marquer tous comme en erreur
-                foreach ($computers_to_sync as $computer_data) {
-                    self::updateComputerSyncStatus($computer_data['id'], 'error', $e->getMessage());
-                }
+                // foreach ($computers_to_sync as $computer_data) {
+                //     self::updateComputerSyncStatus($computer_data['id'], 'error', $e->getMessage());
+                // }
             }
 
             // Statistiques finales
@@ -213,6 +213,7 @@ class CronSyncComputer extends CronManager
 
         // Préparer l'asset de base
         $asset = [
+            'computer_glpi_id' => $computer_data['id'] ?? '',
             'ip' => $network_info['ip'] ?? '',
             'mac' => $network_info['mac'] ?? '',
             'architecture' => $system_info['architecture'] ?? '',
@@ -657,6 +658,7 @@ class CronSyncComputer extends CronManager
             $computers = self::getComputersWithAppsToSync($batch_size);
 
             if (empty($computers)) {
+
                 return [
                     'success' => true,
                     'message' => __('Aucun ordinateur à synchroniser', 'watchman'),
@@ -672,24 +674,29 @@ class CronSyncComputer extends CronManager
             $assets_cleaned = self::cleanAssetsStrict($assets_payload);
 
             // Envoyer à l'API
-            $response = $api_client->syncAssets($assets_payload);
+            $response = $api_client->syncAssets($assets_cleaned);
 
             $processed = 0;
             $errors = 0;
 
+            // var_dump($response);
+
             if ($response['success']) {
-                $processed = count($assets_payload['assets']);
+                // var_dump('success');
+                $processed = count($assets_cleaned['assets']);
                 // Mettre à jour le statut de tous les ordinateurs
-                foreach ($computers as $computer_data) {
-                    self::updateComputerSyncStatus($computer_data['id'], 'success');
+                foreach ($assets_cleaned['assets'] as $asset_cleaned) {
+                    self::updateComputerSyncStatus($asset_cleaned['computer_glpi_id'],'success');
                 }
             } else {
                 $errors = count($computers);
+                // var_dump('errors');
+
 
                 // Marquer tous comme en erreur
-                foreach ($computers as $computer_data) {
-                    self::updateComputerSyncStatus($computer_data['id'], 'error', $response['error'] ?? 'Erreur inconnue');
-                }
+                // foreach ($computers as $computer_data) {
+                //     self::updateComputerSyncStatus($computer_data['id'], 'error', $response['error'] ?? 'Erreur inconnue');
+                // }
             }
 
             return [
@@ -776,7 +783,6 @@ class CronSyncComputer extends CronManager
         $link_count = count($links);
 
         if ($link_count == 0) {
-            echo "Aucun lien software trouvé pour cet ordinateur<br>";
             return [];
         }
 
@@ -793,7 +799,6 @@ class CronSyncComputer extends CronManager
         $active_count = count($active_links);
 
         if ($active_count == 0) {
-            echo "Aucun lien actif trouvé<br>";
             return [];
         }
 

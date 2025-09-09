@@ -1,0 +1,832 @@
+{# Template de base pour plugin GLPI - sans structure HTML complète #}
+{# Ce template s'intègre dans la structure HTML existante de GLPI #}
+
+{# CSS spécifique au plugin #}
+{% block plugin_styles %}
+<link rel="stylesheet" type="text/css" href="{{ base_url }}/plugins/watchman/assets/css/icons.css"> <link rel="stylesheet" type="text/css" href="{{ base_url }}/plugins/watchman/assets/css/tailwind.css">
+<link
+rel="stylesheet" type="text/css" href="{{ base_url }}/plugins/watchman/assets/css/cms_watchman.css">
+{# Flatpickr pour le date range picker #}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<style>
+	.selected {
+		background-color: #e3f2fd !important;
+	}
+	.bulk-actions-container {
+		margin-bottom: 15px;
+		padding: 15px;
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		background-color: #d4edda;
+		border: 1px solid #c3e6cb;
+		border-radius: 5px;
+	}
+	.bulk-actions-buttons {
+		display: flex;
+		gap: 10px;
+	}
+	.computer-name {
+		max-width: 300px;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+	.cms_watchman_content_loading {
+		text-align: center;
+		padding: 50px;
+	}
+	.cms_watchman_loading {
+		display: inline-block;
+		width: 40px;
+		height: 40px;
+		border: 3px solid #f3f3f3;
+		border-top: 3px solid #3498db;
+		border-radius: 50%;
+		animation: spin 1s linear infinite;
+	}
+	@keyframes spin {
+		0% {
+			transform: rotate(0deg);
+		}
+		100% {
+			transform: rotate(360deg);
+		}
+	}
+	.cms_watchman_content_empty {
+		text-align: center;
+		padding: 50px;
+		color: #666;
+	}
+	.cms_watchman_content_empty h1 {
+		font-size: 24px;
+		margin-bottom: 10px;
+		color: #333;
+	}
+	.cms_watchman_content_empty .description {
+		font-size: 16px;
+		color: #666;
+	}
+	.dropdown-menu {
+		min-width: 150px;
+	}
+	.dropdown-item {
+		padding: 8px 15px;
+		cursor: pointer;
+	}
+	.dropdown-item:hover {
+		background-color: #f8f9fa;
+	}
+	.sync-status-badge {
+		font-size: 0.75rem;
+		padding: 0.25rem 0.5rem;
+	}
+</style>
+{% endblock %}
+
+{# Token CSRF pour les requêtes AJAX #}
+<input type="hidden" name="_glpi_csrf_token" value="{{ csrf_token }}">
+
+<div class="plugin-container">
+	{# Navbar du plugin #}
+	{% block navbar %}
+		{% include '@watchman/components/navbar.html.twig' %}
+	{% endblock %}
+
+	<div data-layout-mode="light" class="cms_watchman">
+		<div class="cms_watchman_container cms_watchman_page_content">
+			<div class="cms_watchman_card cms_watchman_content_main">
+				<div class="cms_watchman_content_main_header">
+					<h1>{{ __('Ordinateurs synchronisés', 'watchman') }}</h1>
+					<div class="cms_watchman_btn-group">
+						<button type="button" class="cms_watchman_btn cms_watchman_btn-primary btn-sm" onclick="location.reload()">
+							<i class="fas fa-sync me-1"></i>
+							{{ __('Actualiser', 'watchman') }}
+						</button>
+						<button type="button" class="cms_watchman_btn cms_watchman_btn-success btn-sm" id="cms_watchman_start_computer_sync_btn">
+							<i class="fas fa-play me-1"></i>
+							{{ __('Synchroniser', 'watchman') }}
+						</button>
+					</div>
+				</div>
+
+				<!-- Loading State -->
+				<div class="cms_watchman_content_loading">
+					<span class="cms_watchman_loading"></span>
+					<p>{{ __('Chargement des ordinateurs...', 'watchman') }}</p>
+				</div>
+
+				<!-- Empty State -->
+				<div class="cms_watchman_content_empty hidden">
+					<h1 class="heading">{{ __('Aucun ordinateur synchronisé', 'watchman') }}</h1>
+					<p class="description">
+						{{ __('Lancez une synchronisation pour découvrir les ordinateurs de votre réseau.', 'watchman') }}</p>
+                </div>
+
+                <!-- Main Content -->
+                <div class="cms_watchman_content_main_body hidden">
+                    {% block content %}
+                        <!-- Statistiques -->
+                        <div class="cms_watchman_alert_statistic_row">
+                            <!-- Carte Ordinateurs Synchronisés -->
+                            <div class="cms_watchman_alert_statistic_card" style="background: linear-gradient(90deg, #02AAB0 0%, #00B295 100%); margin-left:0px; max-width: 100%;">
+                                <div class="cms_watchman_alert_statistic_card_text">
+                                    <h1 class="cms_watchman_alert_statistic_card_text_heading">{{ __('Ordinateurs synchronisés', 'watchman') }}</h1>
+                                    <h2 class="cms_watchman_alert_statistic_card_text_value" id="cms_watchman_computer_statistic_total_value">0</h2>
+                                </div>
+                                <div class="cms_watchman_alert_statistic_card_icon">
+                                    <div class="cms_watchman_alert_statistic_card_iconbox">
+                                        <i class="fas fa-desktop"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Conteneur de filtres -->
+                        <div class="cms_watchman_filter_container">
+                            <div class="cms_watchman_input_group">
+                                <i class="fa fa-search"></i>
+                                <input class="cms_watchman_input" type="text" id="cms_watchman_search_computer_input_text" 
+                                       placeholder="{{ __('Rechercher par ID externe...', 'watchman') }}"/>
+                            </div>
+                            
+                            <select class="cms_watchman_select" id="cms_watchman_search_computer_input_status">
+                                <option value="">{{ __('Statut de synchronisation', 'watchman') }}</option>
+                                <option value="synced">{{ __('Synchronisés', 'watchman') }}</option>
+                                <option value="pending">{{ __('En attente', 'watchman') }}</option>
+                                <option value="error">{{ __('Erreurs', 'watchman') }}</option>
+                            </select>
+                            
+                            <div class="cms_watchman_input_group">
+                                <i class="fa fa-calendar"></i>
+                                <input class="cms_watchman_input" autocomplete="off" id="cms_watchman_search_computer_date_range" 
+                                       type="text" placeholder="{{ __('Filtrer par date de sync', 'watchman') }}"/>
+                            </div>
+                            
+                            <button class="cms_watchman_btn" id="cms_watchman_search_computer_btn">
+                                <span>
+                                    <i class="fa fa-search"></i>
+                                </span>
+                            </button>
+                            
+                            <button class="cms_watchman_btn cms_watchman_btn-outline" id="cms_watchman_reset_search_computer_btn">
+                                <i class="mdi mdi-replay"></i>
+                            </button>
+                        </div>
+
+                        <!-- Actions groupées (masquées par défaut) -->
+                        <div class="bulk-actions-container" id="cms_watchman_bulk_actions_container" style="display: none;">
+                            <div>
+                                <strong><span id="cms_watchman_selected_computers_count">0</span></strong> {{ __('ordinateur(s) sélectionné(s)', 'watchman') }}
+                            </div>
+                            <div class="bulk-actions-buttons">
+                                <button class="cms_watchman_btn cms_watchman_btn-primary btn-sm" onclick="cms_watchman_bulk_computer_action('sync')">
+                                    <i class="fas fa-sync me-1"></i>{{ __('Re-synchroniser', 'watchman') }}
+                                </button>
+                                <button class="cms_watchman_btn cms_watchman_btn-danger btn-sm" onclick="cms_watchman_bulk_computer_action('remove')">
+                                    <i class="fas fa-unlink me-1"></i>{{ __('Retirer mapping', 'watchman') }}
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Tableau des ordinateurs -->
+                        <div class="cms_watchman_table_container">
+                            <table class="cms_watchman_table">
+                                <thead>
+                                    <tr>
+                                        <th width="40px">
+                                            <input type="checkbox" id="cms_watchman_select_all_computers" onchange="cms_watchman_toggle_all_computers()">
+                                        </th>
+                                        <th>{{ __('Nom / ID', 'watchman') }}</th>
+                                        <th>{{ __('Statut Sync', 'watchman') }}</th>
+                                        <th>{{ __('Dernière Sync', 'watchman') }}</th>
+                                        <th>{{ __('Lien GLPI', 'watchman') }}</th>
+                                        <th width="100px">{{ __('Actions', 'watchman') }}</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="cms_watchman_computers_table_body">
+                                    <!-- Le contenu sera chargé via AJAX -->
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Pagination -->
+                        <div class="cms_watchman_pagination" id="cms_watchman_computers_pagination">
+                            <!-- Pagination sera générée via JavaScript -->
+                        </div>
+                    {% endblock %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{# Scripts JavaScript #}
+{% block plugin_scripts %}
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script>
+// Configuration globale
+const CMS_WATCHMAN_COMPUTER_CONFIG = {
+    ajaxUrl: '{{ base_url }}/plugins/watchman/ajax/computer_mappings.php',
+    csrfToken: '{{ csrf_token }}',
+    baseUrl: '{{ base_url }}',
+    translations: {
+        confirmRemove: '{{ __("Êtes-vous sûr de vouloir retirer ce mapping ?", "watchman") }}',
+        confirmBulkRemove: '{{ __("Êtes-vous sûr de vouloir retirer les mappings sélectionnés ?", "watchman") }}',
+        confirmSync: '{{ __("Lancer la synchronisation de cet ordinateur ?", "watchman") }}',
+        confirmBulkSync: '{{ __("Lancer la synchronisation des ordinateurs sélectionnés ?", "watchman") }}',
+        loading: '{{ __("Chargement...", "watchman") }}',
+        error: '{{ __("Erreur", "watchman") }}',
+        success: '{{ __("Succès", "watchman") }}',
+        noResults: '{{ __("Aucun résultat trouvé", "watchman") }}',
+        loadingData: '{{ __("Chargement des données...", "watchman") }}',
+        syncSuccess: '{{ __("Synchronisation lancée avec succès", "watchman") }}',
+        syncError: '{{ __("Erreur lors de la synchronisation", "watchman") }}'
+    }
+};
+
+// Variables globales
+let cms_watchman_computers_data = [];
+let cms_watchman_current_page = 1;
+let cms_watchman_total_pages = 1;
+let cms_watchman_filters = {
+    search: '',
+    status: '',
+    date_from: '',
+    date_to: ''
+};
+
+/**
+ * Initialisation de la page
+ */
+document.addEventListener('DOMContentLoaded', function() {
+    cms_watchman_init_computer_page();
+});
+
+/**
+ * Initialise la page des ordinateurs
+ */
+function cms_watchman_init_computer_page() {
+    // Masquer le loading et afficher le contenu principal
+    document.querySelector('.cms_watchman_content_loading').style.display = 'none';
+    document.querySelector('.cms_watchman_content_main_body').classList.remove('hidden');
+    
+    // Charger les données
+    cms_watchman_load_computer_data();
+    cms_watchman_load_computer_statistics();
+    
+    // Initialiser les événements
+    cms_watchman_init_computer_events();
+}
+
+/**
+ * Initialise les événements de la page
+ */
+function cms_watchman_init_computer_events() {
+    // Bouton de synchronisation principale
+    document.getElementById('cms_watchman_start_computer_sync_btn').addEventListener('click', function() {
+        cms_watchman_start_computer_sync();
+    });
+    
+    // Filtres - suppression du debounce sur les inputs pour utiliser le bouton de recherche
+    document.getElementById('cms_watchman_search_computer_input_text').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            cms_watchman_apply_filters();
+        }
+    });
+    document.getElementById('cms_watchman_search_computer_input_status').addEventListener('change', cms_watchman_apply_filters);
+    
+    // Boutons de recherche et reset
+    document.getElementById('cms_watchman_search_computer_btn').addEventListener('click', cms_watchman_apply_filters);
+    document.getElementById('cms_watchman_reset_search_computer_btn').addEventListener('click', cms_watchman_reset_filters);
+    
+    // Initialiser le date range picker
+    cms_watchman_init_date_range_picker();
+}
+
+/**
+ * Charge les données des ordinateurs
+ */
+async function cms_watchman_load_computer_data(page = 1) {
+    try {
+        const params = new URLSearchParams({
+            action: 'get_computers',
+            page: page,
+            per_page: 20,
+            ...cms_watchman_filters
+        });
+        
+        const response = await fetch(`${CMS_WATCHMAN_COMPUTER_CONFIG.ajaxUrl}?${params}`, {
+            method: 'GET',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        });
+        
+        if (!response.ok) {
+            throw new Error('Erreur réseau');
+        }
+
+        //      for debug
+        const text_response = await response.text();
+        console.log('text', text_response);
+        
+        // Parser le JSON depuis le texte
+        const data = JSON.parse(text_response);
+        
+        if (data.success) {
+            cms_watchman_computers_data = data.data;
+            cms_watchman_current_page = data.pagination.current_page;
+            cms_watchman_total_pages = data.pagination.total_pages;
+            
+            cms_watchman_render_computers_table();
+            cms_watchman_render_computers_pagination();
+        } else {
+            throw new Error(data.error || 'Erreur lors du chargement');
+        }
+        
+    } catch (error) {
+        console.error('Erreur:', error);
+        cms_watchman_show_notification(error.message, 'error');
+    }
+}
+
+/**
+ * Charge les statistiques des ordinateurs
+ */
+async function cms_watchman_load_computer_statistics() {
+    try {
+        const response = await fetch(`${CMS_WATCHMAN_COMPUTER_CONFIG.ajaxUrl}?action=get_computer_stats`, {
+            method: 'GET',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            document.getElementById('cms_watchman_computer_statistic_total_value').textContent = data.data.total || 0;
+        }
+        
+    } catch (error) {
+        console.error('Erreur statistiques:', error);
+    }
+}
+
+/**
+ * Rend le tableau des ordinateurs
+ */
+function cms_watchman_render_computers_table() {
+    const tbody = document.getElementById('cms_watchman_computers_table_body');
+    
+    if (cms_watchman_computers_data.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="6" style="text-align: center; padding: 40px;">
+                    <div class="cms_watchman_content_empty">
+                        <h3>${CMS_WATCHMAN_COMPUTER_CONFIG.translations.noResults}</h3>
+                    </div>
+                </td>
+            </tr>
+        `;
+        return;
+    }
+    
+    tbody.innerHTML = cms_watchman_computers_data.map(computer => `
+        <tr class="cms_watchman_computer_row" data-id="${computer.id}">
+            <td>
+                <input type="checkbox" class="cms_watchman_computer_checkbox" value="${computer.id}" onchange="cms_watchman_update_bulk_actions()">
+            </td>
+            <td>
+                <div class="computer-name">
+                    <strong>${computer.name || 'Computer #' + computer.id}</strong>
+                    <br><small class="text-muted">ID GLPI: ${computer.computers_id || 'Non lié'}</small>
+                    ${computer.external_id ? `<br><small class="text-info">External: ${computer.external_id}</small>` : ''}
+                </div>
+            </td>
+            <td>
+                ${cms_watchman_render_sync_status(computer)}
+            </td>
+            <td>
+                ${computer.last_sync_date ? new Date(computer.last_sync_date).toLocaleDateString('fr-FR') + '<br><small>' + new Date(computer.last_sync_date).toLocaleTimeString('fr-FR', {hour: '2-digit', minute: '2-digit'}) + '</small>' : '<span class="text-muted">Jamais</span>'}
+            </td>
+            <td>
+                ${computer.computers_id ? `<a href="${CMS_WATCHMAN_COMPUTER_CONFIG.baseUrl}/front/computer.form.php?id=${computer.computers_id}" class="cms_watchman_btn cms_watchman_btn-outline-primary btn-sm" target="_blank"><i class="fas fa-desktop me-1"></i>GLPI</a>` : '<span class="text-muted">Non lié</span>'}
+            </td>
+            <td>
+                ${cms_watchman_render_computer_actions(computer)}
+            </td>
+        </tr>
+    `).join('');
+}
+
+/**
+ * Rend le statut de synchronisation
+ */
+function cms_watchman_render_sync_status(computer) {
+    const statusConfig = {
+        'synced': { class: 'success', label: 'Synchronisé', icon: 'check' },
+        'pending': { class: 'warning', label: 'En attente', icon: 'clock' },
+        'error': { class: 'danger', label: 'Erreur', icon: 'exclamation-triangle' }
+    };
+    
+    const config = statusConfig[computer.sync_status] || statusConfig['pending'];
+    let html = `<span class="cms_watchman_badge cms_watchman_badge-${config.class} sync-status-badge">
+                    <i class="fas fa-${config.icon} me-1"></i>${config.label}
+                </span>`;
+    
+    if (computer.sync_status === 'error' && computer.error_message) {
+        html += `<br><small class="text-danger" title="${computer.error_message}">
+                    <i class="fas fa-exclamation-triangle"></i> ${computer.error_message.substring(0, 30)}...
+                 </small>`;
+    }
+    
+    return html;
+}
+
+
+/**
+ * Rend les actions pour un ordinateur
+ */
+function cms_watchman_render_computer_actions(computer) {
+    return `
+        <a href="?computer_id=${computer.id}" class="cms_watchman_btn cms_watchman_btn-outline-primary btn-sm">
+            <i class="fas fa-eye me-1"></i>Voir détails
+        </a>
+    `;
+}
+
+/**
+ * Démarre la synchronisation globale
+ */
+async function cms_watchman_start_computer_sync() {
+    const btn = document.getElementById('cms_watchman_start_computer_sync_btn');
+    const originalText = btn.innerHTML;
+    
+    try {
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>' + CMS_WATCHMAN_COMPUTER_CONFIG.translations.loading;
+        
+        const result = await cms_watchman_make_ajax_request('start_computer_sync', {});
+        
+        if (result.success) {
+            cms_watchman_show_notification(result.message, 'success');
+            setTimeout(() => {
+                location.reload();
+            }, 2000);
+        } else {
+            cms_watchman_show_notification(result.message, 'error');
+        }
+    } catch (error) {
+        cms_watchman_show_notification(error.message, 'error');
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+    }
+}
+
+/**
+ * Synchronise un ordinateur spécifique
+ */
+async function cms_watchman_sync_computer(computerId) {
+    if (!confirm(CMS_WATCHMAN_COMPUTER_CONFIG.translations.confirmSync)) {
+        return;
+    }
+    
+    try {
+        const result = await cms_watchman_make_ajax_request('sync_computer', {
+            computer_id: computerId
+        });
+        
+        if (result.success) {
+            cms_watchman_show_notification(result.message, 'success');
+            cms_watchman_load_computer_data(cms_watchman_current_page);
+        } else {
+            cms_watchman_show_notification(result.message, 'error');
+        }
+    } catch (error) {
+        cms_watchman_show_notification(error.message, 'error');
+    }
+}
+
+/**
+ * Retire un mapping d'ordinateur
+ */
+async function cms_watchman_remove_computer_mapping(computerId) {
+    if (!confirm(CMS_WATCHMAN_COMPUTER_CONFIG.translations.confirmRemove)) {
+        return;
+    }
+    
+    try {
+        const result = await cms_watchman_make_ajax_request('remove_computer_mapping', {
+            computer_id: computerId
+        });
+        
+        if (result.success) {
+            cms_watchman_show_notification(result.message, 'success');
+            cms_watchman_load_computer_data(cms_watchman_current_page);
+            cms_watchman_load_computer_statistics();
+        } else {
+            cms_watchman_show_notification(result.message, 'error');
+        }
+    } catch (error) {
+        cms_watchman_show_notification(error.message, 'error');
+    }
+}
+
+/**
+ * Applique les filtres
+ */
+function cms_watchman_apply_filters() {
+    cms_watchman_filters.search = document.getElementById('cms_watchman_search_computer_input_text').value;
+    cms_watchman_filters.status = document.getElementById('cms_watchman_search_computer_input_status').value;
+    
+    // Récupération des dates du date range picker
+    const dateRange = document.getElementById('cms_watchman_search_computer_date_range').value;
+    if (dateRange && dateRange.includes(' to ')) {
+        const dates = dateRange.split(' to ');
+        cms_watchman_filters.date_from = dates[0];
+        cms_watchman_filters.date_to = dates[1];
+    } else {
+        cms_watchman_filters.date_from = '';
+        cms_watchman_filters.date_to = '';
+    }
+    
+    cms_watchman_current_page = 1;
+    cms_watchman_load_computer_data(1);
+}
+
+/**
+ * Remet à zéro tous les filtres
+ */
+function cms_watchman_reset_filters() {
+    // Réinitialiser les champs
+    document.getElementById('cms_watchman_search_computer_input_text').value = '';
+    document.getElementById('cms_watchman_search_computer_input_status').value = '';
+    document.getElementById('cms_watchman_search_computer_date_range').value = '';
+    
+    // Réinitialiser les variables de filtres
+    cms_watchman_filters = {
+        search: '',
+        status: '',
+        date_from: '',
+        date_to: ''
+    };
+    
+    // Recharger les données
+    cms_watchman_current_page = 1;
+    cms_watchman_load_computer_data(1);
+}
+
+/**
+ * Bascule la sélection de tous les ordinateurs
+ */
+function cms_watchman_toggle_all_computers() {
+    const masterCheckbox = document.getElementById('cms_watchman_select_all_computers');
+    const checkboxes = document.querySelectorAll('.cms_watchman_computer_checkbox');
+    
+    checkboxes.forEach(cb => {
+        cb.checked = masterCheckbox.checked;
+    });
+    
+    cms_watchman_update_bulk_actions();
+}
+
+/**
+ * Met à jour l'affichage des actions groupées
+ */
+function cms_watchman_update_bulk_actions() {
+    const checked = document.querySelectorAll('.cms_watchman_computer_checkbox:checked');
+    const container = document.getElementById('cms_watchman_bulk_actions_container');
+    const count = document.getElementById('cms_watchman_selected_computers_count');
+    
+    if (checked.length > 0) {
+        container.style.display = 'flex';
+        count.textContent = checked.length;
+    } else {
+        container.style.display = 'none';
+    }
+    
+    // Mettre à jour la case "tout sélectionner"
+    const masterCheckbox = document.getElementById('cms_watchman_select_all_computers');
+    const allCheckboxes = document.querySelectorAll('.cms_watchman_computer_checkbox');
+    
+    if (allCheckboxes.length > 0) {
+        masterCheckbox.indeterminate = checked.length > 0 && checked.length < allCheckboxes.length;
+        masterCheckbox.checked = checked.length === allCheckboxes.length;
+    }
+}
+
+/**
+ * Actions groupées
+ */
+async function cms_watchman_bulk_computer_action(action) {
+    const selected = Array.from(document.querySelectorAll('.cms_watchman_computer_checkbox:checked')).map(cb => cb.value);
+    
+    if (selected.length === 0) {
+        cms_watchman_show_notification('Aucun ordinateur sélectionné', 'warning');
+        return;
+    }
+    
+    let confirmMessage = '';
+    switch (action) {
+        case 'remove':
+            confirmMessage = CMS_WATCHMAN_COMPUTER_CONFIG.translations.confirmBulkRemove;
+            break;
+        case 'sync':
+            confirmMessage = CMS_WATCHMAN_COMPUTER_CONFIG.translations.confirmBulkSync;
+            break;
+    }
+    
+    if (confirmMessage && !confirm(confirmMessage)) {
+        return;
+    }
+    
+    try {
+        const result = await cms_watchman_make_ajax_request('bulk_computer_action', {
+            bulk_action: action,
+            computer_ids: selected
+        });
+        
+        if (result.success) {
+            cms_watchman_show_notification(result.message, 'success');
+            
+            // Décocher tout et recharger
+            document.getElementById('cms_watchman_select_all_computers').checked = false;
+            document.querySelectorAll('.cms_watchman_computer_checkbox').forEach(cb => cb.checked = false);
+            cms_watchman_update_bulk_actions();
+            
+            cms_watchman_load_computer_data(cms_watchman_current_page);
+            cms_watchman_load_computer_statistics();
+        } else {
+            cms_watchman_show_notification(result.message, 'error');
+        }
+    } catch (error) {
+        cms_watchman_show_notification(error.message, 'error');
+    }
+}
+
+/**
+ * Utilitaires
+ */
+async function cms_watchman_make_ajax_request(action, data = {}) {
+    const formData = new FormData();
+    formData.append('action', action);
+    formData.append('_glpi_csrf_token', CMS_WATCHMAN_COMPUTER_CONFIG.csrfToken);
+    
+    // Ajouter les autres données
+    for (const [key, value] of Object.entries(data)) {
+        formData.append(key, value);
+    }
+    
+    {# const response = await fetch(CMS_WATCHMAN_COMPUTER_CONFIG.ajaxUrl, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: formData
+    }); #}
+
+    const result=await makeRequest(action,null,'POST',data);
+
+    
+    
+    if (!result.success && result.error) {
+        throw new Error(result.error);
+    }
+    
+    return result;
+}
+async function makeRequest(action, params = null, method = 'GET', data = null) {
+        // const url = new URL(`${window.location.origin}${window.location.pathname.replace(/\/[^\/]*$/, '')}/ajax/alerts.php`);
+        const urlStr=`${window.location.origin}${CMS_WATCHMAN_COMPUTER_CONFIG.ajaxUrl}`;
+        console.log(urlStr);
+        const url = new URL(`${urlStr}`);
+        url.searchParams.set('action', action);
+        
+        if (params && method === 'GET') {
+            for (const [key, value] of params.entries()) {
+                if (value !== '' && value !== null) {
+                    url.searchParams.set(key, value);
+                }
+            }
+        }
+        
+        const options = {
+            method: method,
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        };
+        
+        if (method === 'POST' && data) {
+            const formData = new FormData();
+            for (const [key, value] of Object.entries(data)) {
+                formData.append(key, value);
+            }
+            options.body = formData;
+        }
+        
+        const response = await fetch(url, options);
+
+        
+        
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
+        return await response.json();
+    }
+function cms_watchman_show_notification(message, type = 'info') {
+    // Implémentation simplifiée
+    const alertClass = {
+        'success': 'alert-success',
+        'error': 'alert-danger',
+        'warning': 'alert-warning',
+        'info': 'alert-info'
+    }[type] || 'alert-info';
+    
+    const toast = document.createElement('div');
+    toast.className = `alert ${alertClass} alert-dismissible fade show position-fixed`;
+    toast.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+    toast.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    document.body.appendChild(toast);
+    
+    setTimeout(() => {
+        if (toast.parentNode) {
+            toast.remove();
+        }
+    }, 5000);
+}
+
+function cms_watchman_debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+}
+
+/**
+ * Initialise le date range picker
+ */
+function cms_watchman_init_date_range_picker() {
+    if (typeof flatpickr !== 'undefined') {
+        flatpickr("#cms_watchman_search_computer_date_range", {
+            mode: "range",
+            dateFormat: "Y-m-d",
+            locale: "fr",
+            allowInput: true,
+            onChange: function(selectedDates, dateStr, instance) {
+                // La recherche se fera maintenant au clic sur le bouton
+                console.log("Date range selected:", dateStr);
+            }
+        });
+    }
+}
+
+function cms_watchman_render_computers_pagination() {
+    // Implémentation simple de pagination
+    const container = document.getElementById('cms_watchman_computers_pagination');
+    if (cms_watchman_total_pages <= 1) {
+        container.innerHTML = '';
+        return;
+    }
+    
+    let html = '<div class="cms_watchman_pagination_buttons">';
+    
+    // Bouton précédent
+    if (cms_watchman_current_page > 1) {
+        html += `<button onclick="cms_watchman_load_computer_data(${cms_watchman_current_page - 1})" class="cms_watchman_btn cms_watchman_btn-outline-primary btn-sm">Précédent</button>`;
+    }
+    
+    // Numéros de pages
+    for (let i = 1; i <= cms_watchman_total_pages; i++) {
+        if (i === cms_watchman_current_page) {
+            html += `<button class="cms_watchman_btn cms_watchman_btn-primary btn-sm">${i}</button>`;
+        } else {
+            html += `<button onclick="cms_watchman_load_computer_data(${i})" class="cms_watchman_btn cms_watchman_btn-outline-primary btn-sm">${i}</button>`;
+        }
+    }
+    
+    // Bouton suivant
+    if (cms_watchman_current_page < cms_watchman_total_pages) {
+        html += `<button onclick="cms_watchman_load_computer_data(${cms_watchman_current_page + 1})" class="cms_watchman_btn cms_watchman_btn-outline-primary btn-sm">Suivant</button>`;
+    }
+    
+    html += '</div>';
+    container.innerHTML = html;
+}
+</script>
+{% endblock %}

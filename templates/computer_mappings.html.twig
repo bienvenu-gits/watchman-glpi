@@ -1,0 +1,750 @@
+{#
+ # Template pour l'affichage de la liste des ordinateurs synchronisés
+ # @var array computers - Liste des ordinateurs mappés
+ # @var object item - Instance de ComputerManager
+ # @var array params - Paramètres d'affichage
+ # @var string csrf_token - Token CSRF
+ #}
+
+<div class="watchman-computers-container">
+    {# En-tête de la page #}
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h3 class="card-title">
+            <i class="fas fa-desktop text-primary me-2"></i>
+            {{ __('Ordinateurs synchronisés', 'watchman') }}
+            <span class="badge bg-secondary ms-2">{{ computers|length }}</span>
+        </h3>
+        
+        <div class="btn-group">
+            <button type="button" class="btn btn-primary btn-sm" onclick="location.reload()">
+                <i class="fas fa-sync me-1"></i>
+                {{ __('Actualiser', 'watchman') }}
+            </button>
+            <button type="button" class="btn btn-success btn-sm" onclick="startComputerSync()">
+                <i class="fas fa-play me-1"></i>
+                {{ __('Synchroniser', 'watchman') }}
+            </button>
+        </div>
+    </div>
+
+    {# Filtres et statistiques #}
+    <div class="card-body">
+        <div class="row mb-3">
+            <div class="col-md-8">
+                <div class="d-flex gap-2">
+                    <select class="form-select form-select-sm" id="sync-status-filter" onchange="filterComputers()">
+                        <option value="">{{ __('Tous les statuts', 'watchman') }}</option>
+                        <option value="synced">{{ __('Synchronisés', 'watchman') }}</option>
+                        <option value="error">{{ __('Erreur', 'watchman') }}</option>
+                        <option value="pending">{{ __('En attente', 'watchman') }}</option>
+                    </select>
+                    
+                    <select class="form-select form-select-sm" id="has-alerts-filter" onchange="filterComputers()">
+                        <option value="">{{ __('Alertes', 'watchman') }}</option>
+                        <option value="1">{{ __('Avec alertes', 'watchman') }}</option>
+                        <option value="0">{{ __('Sans alertes', 'watchman') }}</option>
+                    </select>
+                    
+                    <input type="text" class="form-control form-control-sm" id="search-input" 
+                           placeholder="{{ __('Rechercher nom, IP...', 'watchman') }}" onkeyup="filterComputers()">
+                </div>
+            </div>
+            
+            <div class="col-md-4 text-end">
+                {% set synced_count = 0 %}
+                {% set error_count = 0 %}
+                {% set with_alerts_count = 0 %}
+                
+                {% for computer in computers %}
+                    {% if computer.sync_status == 'synced' %}
+                        {% set synced_count = synced_count + 1 %}
+                    {% elseif computer.sync_status == 'error' %}
+                        {% set error_count = error_count + 1 %}
+                    {% endif %}
+                    
+                    {% if computer.alerts_count > 0 %}
+                        {% set with_alerts_count = with_alerts_count + 1 %}
+                    {% endif %}
+                {% endfor %}
+                
+                <div class="d-flex gap-3 justify-content-end">
+                    <div class="text-center">
+                        <div class="badge bg-success fs-6">{{ synced_count }}</div>
+                        <small class="d-block text-muted">{{ __('Synchronisés', 'watchman') }}</small>
+                    </div>
+                    <div class="text-center">
+                        <div class="badge bg-danger fs-6">{{ error_count }}</div>
+                        <small class="d-block text-muted">{{ __('Erreurs', 'watchman') }}</small>
+                    </div>
+                    <div class="text-center">
+                        <div class="badge bg-warning fs-6">{{ with_alerts_count }}</div>
+                        <small class="d-block text-muted">{{ __('Avec alertes', 'watchman') }}</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {# Tableau des ordinateurs #}
+        {% if computers|length > 0 %}
+            <div class="table-responsive">
+                <table class="table table-hover" id="computers-table">
+                    <thead class="table-light">
+                        <tr>
+                            <th width="5%">
+                                <input type="checkbox" id="select-all" onchange="toggleAllComputers()">
+                            </th>
+                            <th width="20%">{{ __('Nom de l\'ordinateur', 'watchman') }}</th>
+                            <th width="15%">{{ __('Adresse IP', 'watchman') }}</th>
+                            <th width="15%">{{ __('ID Externe', 'watchman') }}</th>
+                            <th width="10%">{{ __('Statut sync', 'watchman') }}</th>
+                            <th width="10%">{{ __('Alertes', 'watchman') }}</th>
+                            <th width="10%">{{ __('Dernière sync', 'watchman') }}</th>
+                            <th width="10%">{{ __('Lien GLPI', 'watchman') }}</th>
+                            <th width="5%">{{ __('Actions', 'watchman') }}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for computer in computers %}
+                            <tr class="computer-row" 
+                                data-sync-status="{{ computer.sync_status|lower }}" 
+                                data-has-alerts="{{ computer.alerts_count > 0 ? '1' : '0' }}"
+                                data-search="{{ (computer.name ~ ' ' ~ computer.external_id)|lower }}">
+                                <td>
+                                    <input type="checkbox" class="computer-checkbox" value="{{ computer.id }}">
+                                </td>
+                                
+                                <td>
+                                    <div class="fw-bold">{{ computer.name ?? 'Computer #' ~ computer.id }}</div>
+                                    <small class="text-muted">ID: {{ computer.computers_id ?? 'Non lié' }}</small>
+                                </td>
+                                
+                                <td>
+                                    {% if computer.ip %}
+                                        <code class="text-info">{{ computer.ip }}</code>
+                                    {% else %}
+                                        <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                                
+                                <td>
+                                    {% if computer.external_id %}
+                                        <code class="text-secondary">{{ computer.external_id }}</code>
+                                    {% else %}
+                                        <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                                
+                                <td class="text-center">
+                                    {% if computer.sync_status %}
+                                        {% set status_class = 'secondary' %}
+                                        {% set status_label = computer.sync_status %}
+                                        
+                                        {% if computer.sync_status == 'synced' %}
+                                            {% set status_class = 'success' %}
+                                            {% set status_label = __('Synchronisé', 'watchman') %}
+                                        {% elseif computer.sync_status == 'error' %}
+                                            {% set status_class = 'danger' %}
+                                            {% set status_label = __('Erreur', 'watchman') %}
+                                        {% elseif computer.sync_status == 'pending' %}
+                                            {% set status_class = 'warning' %}
+                                            {% set status_label = __('En attente', 'watchman') %}
+                                        {% endif %}
+                                        
+                                        <span class="badge bg-{{ status_class }}">{{ status_label }}</span>
+                                        
+                                        {% if computer.error_message %}
+                                            <i class="fas fa-exclamation-triangle text-danger ms-1" 
+                                               title="{{ computer.error_message|slice(0, 100) }}"></i>
+                                        {% endif %}
+                                    {% else %}
+                                        <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                                
+                                <td class="text-center">
+                                    {% if computer.alerts_count > 0 %}
+                                        <span class="badge bg-danger">{{ computer.alerts_count }}</span>
+                                        <div class="mt-1">
+                                            <small class="text-muted">
+                                                {% if computer.critical_alerts > 0 %}
+                                                    <span class="badge badge-sm bg-danger">{{ computer.critical_alerts }} critiques</span>
+                                                {% endif %}
+                                                {% if computer.high_alerts > 0 %}
+                                                    <span class="badge badge-sm bg-warning">{{ computer.high_alerts }} élevées</span>
+                                                {% endif %}
+                                            </small>
+                                        </div>
+                                    {% else %}
+                                        <span class="badge bg-success">0</span>
+                                        <small class="d-block text-muted">{{ __('Aucune', 'watchman') }}</small>
+                                    {% endif %}
+                                </td>
+                                
+                                <td>
+                                    <div class="text-center">
+                                        {% if computer.last_sync_date %}
+                                            <div>{{ computer.last_sync_date|date('d/m/Y') }}</div>
+                                            <small class="text-muted">{{ computer.last_sync_date|date('H:i') }}</small>
+                                        {% else %}
+                                            <span class="text-muted">{{ __('Jamais', 'watchman') }}</span>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                                
+                                <td class="text-center">
+                                    {% if computer.computers_id %}
+                                        <a href="{{ path('front/computer.form.php') }}?id={{ computer.computers_id }}" 
+                                           class="btn btn-sm btn-outline-primary" target="_blank">
+                                            <i class="fas fa-desktop me-1"></i>{{ __('GLPI', 'watchman') }}
+                                        </a>
+                                    {% else %}
+                                        <span class="text-muted">{{ __('Non lié', 'watchman') }}</span>
+                                    {% endif %}
+                                </td>
+                                
+                                <td class="text-center">
+                                    <div class="dropdown">
+                                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" 
+                                                type="button" data-bs-toggle="dropdown">
+                                            <i class="fas fa-ellipsis-v"></i>
+                                        </button>
+                                        <ul class="dropdown-menu">
+                                            <li>
+                                                <a class="dropdown-item" href="?computer_id={{ computer.id }}">
+                                                    <i class="fas fa-eye me-2"></i>{{ __('Voir détails', 'watchman') }}
+                                                </a>
+                                            </li>
+                                            {% if computer.alerts_count > 0 %}
+                                                <li>
+                                                    <a class="dropdown-item" href="{{ path('plugins/watchman/front/alertmanager.php') }}?computer_id={{ computer.id }}">
+                                                        <i class="fas fa-exclamation-triangle me-2"></i>{{ __('Voir alertes', 'watchman') }}
+                                                    </a>
+                                                </li>
+                                            {% endif %}
+                                            <li>
+                                                <a class="dropdown-item" href="#" onclick="syncComputer('{{ computer.id }}', '{{ csrf_token }}')">
+                                                    <i class="fas fa-sync me-2"></i>{{ __('Re-synchroniser', 'watchman') }}
+                                                </a>
+                                            </li>
+                                            {% if computer.sync_status == 'error' %}
+                                                <li>
+                                                    <a class="dropdown-item" href="#" onclick="viewSyncError('{{ computer.id }}')">
+                                                        <i class="fas fa-bug me-2"></i>{{ __('Voir l\'erreur', 'watchman') }}
+                                                    </a>
+                                                </li>
+                                            {% endif %}
+                                        </ul>
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            {# Actions groupées #}
+            <div class="mt-3 d-none" id="bulk-actions">
+                <div class="alert alert-info">
+                    <strong><span id="selected-count">0</span></strong> {{ __('ordinateur(s) sélectionné(s)', 'watchman') }}
+                    <div class="btn-group ms-3">
+                        <button class="btn btn-primary btn-sm" onclick="bulkComputerAction('sync')">
+                            <i class="fas fa-sync me-1"></i>{{ __('Re-synchroniser', 'watchman') }}
+                        </button>
+                        <button class="btn btn-warning btn-sm" onclick="bulkComputerAction('check-alerts')">
+                            <i class="fas fa-search me-1"></i>{{ __('Vérifier alertes', 'watchman') }}
+                        </button>
+                        <button class="btn btn-danger btn-sm" onclick="bulkComputerAction('remove')">
+                            <i class="fas fa-unlink me-1"></i>{{ __('Retirer mapping', 'watchman') }}
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+        {% else %}
+            {# Aucun ordinateur #}
+            <div class="text-center py-5">
+                <i class="fas fa-desktop text-muted" style="font-size: 4rem;"></i>
+                <h4 class="mt-3">{{ __('Aucun ordinateur synchronisé', 'watchman') }}</h4>
+                <p class="text-muted">{{ __('Lancez une synchronisation pour découvrir les ordinateurs de votre réseau.', 'watchman') }}</p>
+                <button class="btn btn-primary" onclick="startComputerSync()">
+                    <i class="fas fa-sync me-2"></i>{{ __('Démarrer la synchronisation', 'watchman') }}
+                </button>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+{# JavaScript pour les interactions #}
+<script>
+// Configuration globale
+const WATCHMAN_COMPUTER_CONFIG = {
+    ajaxUrl: '{{ path('plugins/watchman/ajax/computer_mappings.php') }}',
+    csrfToken: '{{ csrf_token }}',
+    translations: {
+        confirmRemove: '{{ __("Êtes-vous sûr de vouloir retirer ce mapping ?", "watchman") }}',
+        confirmBulkRemove: '{{ __("Êtes-vous sûr de vouloir retirer les mappings sélectionnés ?", "watchman") }}',
+        confirmSync: '{{ __("Lancer la synchronisation de cet ordinateur ?", "watchman") }}',
+        confirmBulkSync: '{{ __("Lancer la synchronisation des ordinateurs sélectionnés ?", "watchman") }}',
+        loading: '{{ __("Chargement...", "watchman") }}',
+        error: '{{ __("Erreur", "watchman") }}',
+        success: '{{ __("Succès", "watchman") }}'
+    }
+};
+
+/**
+ * Utilitaire pour les requêtes AJAX
+ */
+async function makeComputerAjaxRequest(action, data = {}) {
+    const payload = {
+        action: action,
+        _glpi_csrf_token: WATCHMAN_COMPUTER_CONFIG.csrfToken,
+        ...data
+    };
+    
+    try {
+        const response = await fetch(WATCHMAN_COMPUTER_CONFIG.ajaxUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: JSON.stringify(payload)
+        });
+        
+        const result = await response.json();
+        
+        if (!response.ok) {
+            throw new Error(result.message || 'Erreur serveur');
+        }
+        
+        return result;
+    } catch (error) {
+        console.error('Erreur AJAX:', error);
+        throw error;
+    }
+}
+
+/**
+ * Affiche une notification toast
+ */
+function showComputerNotification(message, type = 'info') {
+    const alertClass = {
+        'success': 'alert-success',
+        'error': 'alert-danger',
+        'warning': 'alert-warning',
+        'info': 'alert-info'
+    }[type] || 'alert-info';
+    
+    const toast = document.createElement('div');
+    toast.className = `alert ${alertClass} alert-dismissible fade show position-fixed`;
+    toast.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+    toast.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    document.body.appendChild(toast);
+    
+    // Auto-dismiss après 5 secondes
+    setTimeout(() => {
+        if (toast.parentNode) {
+            toast.remove();
+        }
+    }, 5000);
+}
+
+/**
+ * Démarre la synchronisation des ordinateurs
+ */
+async function startComputerSync() {
+    const btn = event?.target;
+    const originalText = btn?.innerHTML;
+    
+    try {
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>' + WATCHMAN_COMPUTER_CONFIG.translations.loading;
+        }
+        
+        const result = await makeComputerAjaxRequest('start_computer_sync');
+        
+        if (result.success) {
+            showComputerNotification(result.message, 'success');
+            setTimeout(() => {
+                location.reload();
+            }, 2000);
+        } else {
+            showComputerNotification(result.message, 'error');
+        }
+    } catch (error) {
+        showComputerNotification(error.message, 'error');
+    } finally {
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+        }
+    }
+}
+
+/**
+ * Synchronise un ordinateur spécifique
+ */
+async function syncComputer(computerId, csrfToken) {
+    if (!confirm(WATCHMAN_COMPUTER_CONFIG.translations.confirmSync)) {
+        return;
+    }
+    
+    const btn = event?.target;
+    const originalText = btn?.innerHTML;
+    
+    try {
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>' + WATCHMAN_COMPUTER_CONFIG.translations.loading;
+        }
+        
+        const result = await makeComputerAjaxRequest('sync_computer', {
+            computer_id: computerId
+        });
+        
+        if (result.success) {
+            showComputerNotification(result.message, 'success');
+            
+            // Mettre à jour visuellement la ligne
+            const row = document.querySelector(`tr .computer-checkbox[value="${computerId}"]`)?.closest('tr');
+            if (row) {
+                const statusCell = row.querySelector('td:nth-child(5)'); // Colonne statut
+                if (statusCell) {
+                    statusCell.innerHTML = `
+                        <span class="badge bg-success">{{ __('Synchronisé', 'watchman') }}</span>
+                    `;
+                }
+                
+                const syncDateCell = row.querySelector('td:nth-child(7)'); // Colonne dernière sync
+                if (syncDateCell) {
+                    const now = new Date();
+                    syncDateCell.innerHTML = `
+                        <div class="text-center">
+                            <div>${now.toLocaleDateString('fr-FR')}</div>
+                            <small class="text-muted">${now.toLocaleTimeString('fr-FR', {hour: '2-digit', minute: '2-digit'})}</small>
+                        </div>
+                    `;
+                }
+                
+                row.setAttribute('data-sync-status', 'synced');
+            }
+        } else {
+            showComputerNotification(result.message, 'error');
+        }
+    } catch (error) {
+        showComputerNotification(error.message, 'error');
+    } finally {
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+        }
+    }
+}
+
+/**
+ * Affiche l'erreur de synchronisation
+ */
+async function viewSyncError(computerId) {
+    try {
+        const result = await makeComputerAjaxRequest('get_sync_error', {
+            computer_id: computerId
+        });
+        
+        if (result.success) {
+            showSyncErrorModal(result.data);
+        } else {
+            showComputerNotification(result.message, 'error');
+        }
+    } catch (error) {
+        showComputerNotification(error.message, 'error');
+    }
+}
+
+/**
+ * Affiche la modal avec l'erreur de synchronisation
+ */
+function showSyncErrorModal(errorData) {
+    let modal = document.getElementById('sync-error-modal');
+    if (!modal) {
+        modal = createSyncErrorModal();
+        document.body.appendChild(modal);
+    }
+    
+    const modalBody = modal.querySelector('.modal-body');
+    modalBody.innerHTML = `
+        <div class="alert alert-danger">
+            <strong>{{ __('Erreur de synchronisation', 'watchman') }}:</strong>
+            <p class="mb-0 mt-2">${errorData.error_message}</p>
+        </div>
+        
+        <div class="row">
+            <div class="col-md-6">
+                <h6>{{ __('Informations', 'watchman') }}</h6>
+                <table class="table table-sm">
+                    <tr>
+                        <td><strong>{{ __('Date d\'erreur', 'watchman') }}:</strong></td>
+                        <td>${errorData.error_date}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>{{ __('Nombre de tentatives', 'watchman') }}:</strong></td>
+                        <td>${errorData.retry_count || 0}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>{{ __('Dernière tentative', 'watchman') }}:</strong></td>
+                        <td>${errorData.last_retry || 'N/A'}</td>
+                    </tr>
+                </table>
+            </div>
+            <div class="col-md-6">
+                <h6>{{ __('Détails techniques', 'watchman') }}</h6>
+                <pre class="bg-light p-2 small">${errorData.error_details || 'Aucun détail disponible'}</pre>
+            </div>
+        </div>
+    `;
+    
+    const bsModal = new bootstrap.Modal(modal);
+    bsModal.show();
+}
+
+/**
+ * Crée la structure HTML de la modal d'erreur
+ */
+function createSyncErrorModal() {
+    const modal = document.createElement('div');
+    modal.id = 'sync-error-modal';
+    modal.className = 'modal fade';
+    modal.innerHTML = `
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-exclamation-triangle text-danger me-2"></i>
+                        {{ __('Erreur de synchronisation', 'watchman') }}
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <!-- Contenu dynamique -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        {{ __('Fermer', 'watchman') }}
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+    return modal;
+}
+
+/**
+ * Filtrage des ordinateurs
+ */
+function filterComputers() {
+    const syncStatusFilter = document.getElementById('sync-status-filter').value.toLowerCase();
+    const hasAlertsFilter = document.getElementById('has-alerts-filter').value;
+    const searchTerm = document.getElementById('search-input').value.toLowerCase();
+    
+    const rows = document.querySelectorAll('.computer-row');
+    let visibleCount = 0;
+    
+    rows.forEach(row => {
+        const syncStatus = row.dataset.syncStatus;
+        const hasAlerts = row.dataset.hasAlerts;
+        const searchData = row.dataset.search;
+        
+        let showRow = true;
+        
+        if (syncStatusFilter && syncStatus !== syncStatusFilter) showRow = false;
+        if (hasAlertsFilter !== '' && hasAlerts !== hasAlertsFilter) showRow = false;
+        if (searchTerm && !searchData.includes(searchTerm)) showRow = false;
+        
+        row.style.display = showRow ? '' : 'none';
+        if (showRow) visibleCount++;
+    });
+    
+    // Mettre à jour le compteur
+    const totalBadge = document.querySelector('.card-title .badge.bg-secondary');
+    if (totalBadge) {
+        totalBadge.textContent = visibleCount;
+        totalBadge.title = `${visibleCount} ordinateurs affichés sur ${rows.length} total`;
+    }
+}
+
+/**
+ * Sélectionner/désélectionner tous les ordinateurs visibles
+ */
+function toggleAllComputers() {
+    const masterCheckbox = document.getElementById('select-all');
+    const visibleCheckboxes = document.querySelectorAll('.computer-row:not([style*="display: none"]) .computer-checkbox');
+    
+    visibleCheckboxes.forEach(cb => {
+        cb.checked = masterCheckbox.checked;
+    });
+    
+    updateBulkComputerActions();
+}
+
+/**
+ * Met à jour l'affichage des actions groupées
+ */
+function updateBulkComputerActions() {
+    const checked = document.querySelectorAll('.computer-checkbox:checked');
+    const bulkActions = document.getElementById('bulk-actions');
+    const selectedCount = document.getElementById('selected-count');
+    
+    if (checked.length > 0) {
+        bulkActions.classList.remove('d-none');
+        selectedCount.textContent = checked.length;
+    } else {
+        bulkActions.classList.add('d-none');
+    }
+    
+    // Mettre à jour l'état de la case "tout sélectionner"
+    const masterCheckbox = document.getElementById('select-all');
+    const visibleCheckboxes = document.querySelectorAll('.computer-row:not([style*="display: none"]) .computer-checkbox');
+    const checkedVisible = document.querySelectorAll('.computer-row:not([style*="display: none"]) .computer-checkbox:checked');
+    
+    if (visibleCheckboxes.length > 0) {
+        masterCheckbox.indeterminate = checkedVisible.length > 0 && checkedVisible.length < visibleCheckboxes.length;
+        masterCheckbox.checked = checkedVisible.length === visibleCheckboxes.length;
+    }
+}
+
+/**
+ * Gère les actions groupées sur les ordinateurs
+ */
+async function bulkComputerAction(action) {
+    const selected = Array.from(document.querySelectorAll('.computer-checkbox:checked')).map(cb => cb.value);
+    
+    if (selected.length === 0) {
+        showComputerNotification('{{ __("Aucun ordinateur sélectionné", "watchman") }}', 'warning');
+        return;
+    }
+    
+    // Confirmation pour certaines actions
+    let confirmMessage = '';
+    switch (action) {
+        case 'remove':
+            confirmMessage = WATCHMAN_COMPUTER_CONFIG.translations.confirmBulkRemove;
+            break;
+        case 'sync':
+            confirmMessage = WATCHMAN_COMPUTER_CONFIG.translations.confirmBulkSync;
+            break;
+    }
+    
+    if (confirmMessage && !confirm(confirmMessage)) {
+        return;
+    }
+    
+    try {
+        const result = await makeComputerAjaxRequest('bulk_computer_action', {
+            bulk_action: action,
+            computer_ids: selected
+        });
+        
+        if (result.success) {
+            showComputerNotification(result.message, 'success');
+            
+            // Actions spécifiques selon le type
+            switch (action) {
+                case 'remove':
+                    // Supprimer les lignes sélectionnées
+                    selected.forEach(computerId => {
+                        const row = document.querySelector(`.computer-checkbox[value="${computerId}"]`)?.closest('tr');
+                        if (row) row.remove();
+                    });
+                    break;
+                    
+                case 'sync':
+                    // Mettre à jour le statut des lignes
+                    selected.forEach(computerId => {
+                        const row = document.querySelector(`.computer-checkbox[value="${computerId}"]`)?.closest('tr');
+                        if (row) {
+                            row.setAttribute('data-sync-status', 'synced');
+                            const statusCell = row.querySelector('td:nth-child(5)');
+                            if (statusCell) {
+                                statusCell.innerHTML = `<span class="badge bg-success">{{ __('Synchronisé', 'watchman') }}</span>`;
+                            }
+                        }
+                    });
+                    break;
+            }
+            
+            // Décocher toutes les cases et masquer les actions groupées
+            document.getElementById('select-all').checked = false;
+            document.querySelectorAll('.computer-checkbox').forEach(cb => cb.checked = false);
+            updateBulkComputerActions();
+            
+        } else {
+            showComputerNotification(result.message, 'error');
+        }
+    } catch (error) {
+        showComputerNotification(error.message, 'error');
+    }
+}
+
+/**
+ * Initialisation au chargement de la page
+ */
+document.addEventListener('DOMContentLoaded', function() {
+    // Event listeners pour les checkboxes
+    document.querySelectorAll('.computer-checkbox').forEach(cb => {
+        cb.addEventListener('change', updateBulkComputerActions);
+    });
+    
+    // Auto-refresh toutes les 10 minutes
+    setInterval(() => {
+        if (confirm('{{ __("Actualiser la liste des ordinateurs ?", "watchman") }}')) {
+            location.reload();
+        }
+    }, 600000); // 10 minutes
+});
+</script>
+
+{# Styles CSS additionnels #}
+<style>
+.watchman-computers-container .table th {
+    background-color: #f8f9fa;
+    font-weight: 600;
+    border-bottom: 2px solid #dee2e6;
+}
+
+.computer-row:hover {
+    background-color: rgba(0, 123, 255, 0.05);
+}
+
+.badge {
+    font-size: 0.75rem;
+}
+
+.badge-sm {
+    font-size: 0.65rem;
+    padding: 0.2em 0.4em;
+}
+
+.dropdown-menu {
+    font-size: 0.875rem;
+}
+
+#bulk-actions {
+    position: sticky;
+    bottom: 20px;
+    z-index: 10;
+}
+
+.table-responsive {
+    border-radius: 0.375rem;
+    border: 1px solid #dee2e6;
+}
+
+pre {
+    max-height: 200px;
+    overflow-y: auto;
+}
+</style>

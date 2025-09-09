@@ -240,7 +240,7 @@ public function makeFileUploadRequest($endpoint, $filepath, $custom_headers = nu
     
     // Préparer les données multipart
     $postfields = array_merge($additional_fields, [
-        'assets_file' => new CURLFile($filepath, 'application/json', basename($filepath))
+        'file' => new CURLFile($filepath, 'application/json', basename($filepath))
     ]);
     
     // En-têtes (sans Content-Type pour multipart)
@@ -637,7 +637,7 @@ public function syncAssets($assets_payload) {
         
         
         // Endpoint pour la synchronisation des assets
-        $endpoint = '/agents/webhook_v2';
+        $endpoint = '/agent/webhook_v2/';
         
         // En-têtes personnalisés pour l'agent
         $custom_headers = [
@@ -650,7 +650,7 @@ public function syncAssets($assets_payload) {
         
         // OPTION 1: Envoyer le contenu du fichier comme données JSON
         // $result = $this->makeRequestWithRetry($endpoint, 'POST', $json_content, 1, $custom_headers, true);
-        
+       
         // OPTION 2: Alternative - Upload multipart du fichier (décommentez si nécessaire)
         $result = $this->makeFileUploadRequestWithRetry($endpoint, $filepath, $custom_headers);
         

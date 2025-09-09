@@ -58,6 +58,34 @@ class WatchmanManager extends CommonDBTM
 
         return true;
     }
+
+    function showComputerMappings($computer_id = null)
+    {
+        global $CFG_GLPI;
+        
+        if ($computer_id) {
+            TemplateRenderer::getInstance()->display('@watchman/pages/computer_detail.html.twig', [
+                'item'   => $this,
+                'base_url' => $CFG_GLPI["root_doc"],
+                'csrf_token' => Session::getNewCSRFToken(),
+            ]);
+            return true;
+        }
+        
+        // Récupérer tous les mappings d'ordinateurs
+        $computer_manager = new ComputerManager();
+        $computers = $computer_manager->getComputerMappings(['limit' => 1000]);
+        
+        TemplateRenderer::getInstance()->display('@watchman/pages/computer_mappings.html.twig', [
+            'item'   => $this,
+            'computers' => $computers,
+            'base_url' => $CFG_GLPI["root_doc"],
+            'csrf_token' => Session::getNewCSRFToken(),
+        ]);
+        
+        return true;
+    }
+     
      static function getMenuName($nb = 0)
     {
         // call class label
