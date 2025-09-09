@@ -55,43 +55,11 @@ function plugin_init_watchman()
     $PLUGIN_HOOKS['csrf_compliant']['watchman'] = true;
     // add config name
     $PLUGIN_HOOKS['menu_toadd']['watchman'] = [
-        // insert into 'plugin menu'
         'plugins' => [
             WatchmanManager::class,
-            // ComputerManager::class,
-            // AlertManager::class,
             ]
     ];
 
-//     $PLUGIN_HOOKS['menu_toadd']['watchman'] = [
-//     'plugins' => [
-//         [
-//             'title'  => __('Tableau de bord', 'watchman'),
-//             'page'   => Plugin::getWebDir('watchman') . '/front/main.php',
-//             'icon'   => 'fas fa-cube',
-//             'options' => [
-//                 'section1' => [
-//                     'title' => __('Configuration', 'watchman'),
-//                     'page'  => Plugin::getWebDir('watchman') . '/front/section1.php',
-//                     'options' => [
-//                         'sub1' => [
-//                             'title' => __('Sous-page 1.1', 'watchman'),
-//                             'page'  => Plugin::getWebDir('watchman') . '/front/sub11.php'
-//                         ],
-//                         'sub2' => [
-//                             'title' => __('Sous-page 1.2', 'watchman'),
-//                             'page'  => Plugin::getWebDir('watchman') . '/front/sub12.php'
-//                         ]
-//                     ]
-//                 ],
-//                 'section2' => [
-//                     'title' => __('Taches', 'watchman'),
-//                     'page'  => Plugin::getWebDir('watchman') . '/front/section2.php'
-//                 ]
-//             ]
-//         ]
-//     ]
-// ];
 
 }
 

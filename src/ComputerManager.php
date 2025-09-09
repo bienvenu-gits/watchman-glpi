@@ -3,6 +3,7 @@
 namespace GlpiPlugin\Watchman;
 
 use CommonDBTM;
+use Exception;
 use Glpi\Application\View\TemplateRenderer;
 use Session;
 

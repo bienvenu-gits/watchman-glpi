@@ -133,10 +133,27 @@ function handleGetComputers($computerManager) {
         
         $debug[] = "Simple count result: " . $simple_count;
 
-        // Récupération des ordinateurs
-        $debug[] = "Calling getComputerMappings...";
-        $computers = $computerManager->getComputerMappings([]);  // Aucune option
-        $debug[] = "getComputerMappings returned " . count($computers) . " computers";
+        // Récupération des ordinateurs avec noms GLPI
+        global $DB;
+        $query = "
+            SELECT 
+                cm.*,
+                c.name as computer_name
+            FROM glpi_plugin_watchman_computer_mappings cm
+            LEFT JOIN glpi_computers c ON cm.computers_id = c.id
+            ORDER BY cm.date_creation DESC
+            LIMIT " . intval($start) . ", " . intval($per_page);
+        
+        $result = $DB->query($query);
+        $computers = [];
+        
+        if ($result) {
+            while ($row = $DB->fetchAssoc($result)) {
+                $computers[] = $row;
+            }
+        }
+        
+        $debug[] = "Direct query returned " . count($computers) . " computers";
 
         
 
@@ -506,7 +523,7 @@ function formatComputerForDisplay($computer) {
     
     return [
         'id' => $computer['id'],
-        'name' => $computer['external_id'] ?? 'Computer #' . $computer['id'], // Pas de colonne name, utiliser external_id
+        'name' => $computer['computer_name'] ?? ($computer['external_id'] ?? 'Computer #' . $computer['id']),
         'ip' => null, // Pas de colonne IP dans le schéma actuel
         'external_id' => $computer['external_id'],
         'computers_id' => $computer['computers_id'],

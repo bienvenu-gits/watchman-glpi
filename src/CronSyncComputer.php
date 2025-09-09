@@ -126,7 +126,7 @@ class CronSyncComputer extends CronManager
                     $task->addVolume($processed);
 
                     // Mettre à jour le statut de synchronisation pour tous les ordinateurs traités
-                    foreach ($computers_to_sync as $computer_data) {
+                    foreach ($assets_cleaned['assets'] as $computer_data) {
                         self::updateComputerSyncStatus($computer_data['id'], 'success');
                     }
 

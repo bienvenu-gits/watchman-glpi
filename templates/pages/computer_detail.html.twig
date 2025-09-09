@@ -718,9 +718,11 @@ async function cms_watchman_load_application_alerts(app, uniqueId) {
  */
 function cms_watchman_render_sync_status_text(status) {
     const statusConfig = {
+        'success': 'Synchronisé',
         'synced': 'Synchronisé',
         'pending': 'En attente', 
         'error': 'Erreur',
+        'failed': 'Échec',
         'unknown': 'Inconnu'
     };
     
@@ -729,9 +731,11 @@ function cms_watchman_render_sync_status_text(status) {
 
 function cms_watchman_get_sync_status_color(status) {
     const colorConfig = {
+        'success': 'success',
         'synced': 'success',
         'pending': 'warning', 
         'error': 'danger',
+        'failed': 'danger',
         'unknown': 'secondary'
     };
     

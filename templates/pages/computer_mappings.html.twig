@@ -9,23 +9,6 @@ rel="stylesheet" type="text/css" href="{{ base_url }}/plugins/watchman/assets/cs
 {# Flatpickr pour le date range picker #}
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 <style>
-	.selected {
-		background-color: #e3f2fd !important;
-	}
-	.bulk-actions-container {
-		margin-bottom: 15px;
-		padding: 15px;
-		display: flex;
-		justify-content: space-between;
-		align-items: center;
-		background-color: #d4edda;
-		border: 1px solid #c3e6cb;
-		border-radius: 5px;
-	}
-	.bulk-actions-buttons {
-		display: flex;
-		gap: 10px;
-	}
 	.computer-name {
 		max-width: 300px;
 		overflow: hidden;
@@ -174,29 +157,11 @@ rel="stylesheet" type="text/css" href="{{ base_url }}/plugins/watchman/assets/cs
                             </button>
                         </div>
 
-                        <!-- Actions groupées (masquées par défaut) -->
-                        <div class="bulk-actions-container" id="cms_watchman_bulk_actions_container" style="display: none;">
-                            <div>
-                                <strong><span id="cms_watchman_selected_computers_count">0</span></strong> {{ __('ordinateur(s) sélectionné(s)', 'watchman') }}
-                            </div>
-                            <div class="bulk-actions-buttons">
-                                <button class="cms_watchman_btn cms_watchman_btn-primary btn-sm" onclick="cms_watchman_bulk_computer_action('sync')">
-                                    <i class="fas fa-sync me-1"></i>{{ __('Re-synchroniser', 'watchman') }}
-                                </button>
-                                <button class="cms_watchman_btn cms_watchman_btn-danger btn-sm" onclick="cms_watchman_bulk_computer_action('remove')">
-                                    <i class="fas fa-unlink me-1"></i>{{ __('Retirer mapping', 'watchman') }}
-                                </button>
-                            </div>
-                        </div>
-
                         <!-- Tableau des ordinateurs -->
                         <div class="cms_watchman_table_container">
                             <table class="cms_watchman_table">
                                 <thead>
                                     <tr>
-                                        <th width="40px">
-                                            <input type="checkbox" id="cms_watchman_select_all_computers" onchange="cms_watchman_toggle_all_computers()">
-                                        </th>
                                         <th>{{ __('Nom / ID', 'watchman') }}</th>
                                         <th>{{ __('Statut Sync', 'watchman') }}</th>
                                         <th>{{ __('Dernière Sync', 'watchman') }}</th>
@@ -383,7 +348,7 @@ function cms_watchman_render_computers_table() {
     if (cms_watchman_computers_data.length === 0) {
         tbody.innerHTML = `
             <tr>
-                <td colspan="6" style="text-align: center; padding: 40px;">
+                <td colspan="5" style="text-align: center; padding: 40px;">
                     <div class="cms_watchman_content_empty">
                         <h3>${CMS_WATCHMAN_COMPUTER_CONFIG.translations.noResults}</h3>
                     </div>
@@ -395,9 +360,6 @@ function cms_watchman_render_computers_table() {
     
     tbody.innerHTML = cms_watchman_computers_data.map(computer => `
         <tr class="cms_watchman_computer_row" data-id="${computer.id}">
-            <td>
-                <input type="checkbox" class="cms_watchman_computer_checkbox" value="${computer.id}" onchange="cms_watchman_update_bulk_actions()">
-            </td>
             <td>
                 <div class="computer-name">
                     <strong>${computer.name || 'Computer #' + computer.id}</strong>
@@ -426,9 +388,11 @@ function cms_watchman_render_computers_table() {
  */
 function cms_watchman_render_sync_status(computer) {
     const statusConfig = {
+        'success': { class: 'success', label: 'Synchronisé', icon: 'check' },
         'synced': { class: 'success', label: 'Synchronisé', icon: 'check' },
         'pending': { class: 'warning', label: 'En attente', icon: 'clock' },
-        'error': { class: 'danger', label: 'Erreur', icon: 'exclamation-triangle' }
+        'error': { class: 'danger', label: 'Erreur', icon: 'exclamation-triangle' },
+        'failed': { class: 'danger', label: 'Échec', icon: 'times' }
     };
     
     const config = statusConfig[computer.sync_status] || statusConfig['pending'];
@@ -436,7 +400,7 @@ function cms_watchman_render_sync_status(computer) {
                     <i class="fas fa-${config.icon} me-1"></i>${config.label}
                 </span>`;
     
-    if (computer.sync_status === 'error' && computer.error_message) {
+    if ((computer.sync_status === 'error' || computer.sync_status === 'failed') && computer.error_message) {
         html += `<br><small class="text-danger" title="${computer.error_message}">
                     <i class="fas fa-exclamation-triangle"></i> ${computer.error_message.substring(0, 30)}...
                  </small>`;
@@ -579,93 +543,8 @@ function cms_watchman_reset_filters() {
     cms_watchman_load_computer_data(1);
 }
 
-/**
- * Bascule la sélection de tous les ordinateurs
- */
-function cms_watchman_toggle_all_computers() {
-    const masterCheckbox = document.getElementById('cms_watchman_select_all_computers');
-    const checkboxes = document.querySelectorAll('.cms_watchman_computer_checkbox');
-    
-    checkboxes.forEach(cb => {
-        cb.checked = masterCheckbox.checked;
-    });
-    
-    cms_watchman_update_bulk_actions();
-}
 
-/**
- * Met à jour l'affichage des actions groupées
- */
-function cms_watchman_update_bulk_actions() {
-    const checked = document.querySelectorAll('.cms_watchman_computer_checkbox:checked');
-    const container = document.getElementById('cms_watchman_bulk_actions_container');
-    const count = document.getElementById('cms_watchman_selected_computers_count');
-    
-    if (checked.length > 0) {
-        container.style.display = 'flex';
-        count.textContent = checked.length;
-    } else {
-        container.style.display = 'none';
-    }
-    
-    // Mettre à jour la case "tout sélectionner"
-    const masterCheckbox = document.getElementById('cms_watchman_select_all_computers');
-    const allCheckboxes = document.querySelectorAll('.cms_watchman_computer_checkbox');
-    
-    if (allCheckboxes.length > 0) {
-        masterCheckbox.indeterminate = checked.length > 0 && checked.length < allCheckboxes.length;
-        masterCheckbox.checked = checked.length === allCheckboxes.length;
-    }
-}
 
-/**
- * Actions groupées
- */
-async function cms_watchman_bulk_computer_action(action) {
-    const selected = Array.from(document.querySelectorAll('.cms_watchman_computer_checkbox:checked')).map(cb => cb.value);
-    
-    if (selected.length === 0) {
-        cms_watchman_show_notification('Aucun ordinateur sélectionné', 'warning');
-        return;
-    }
-    
-    let confirmMessage = '';
-    switch (action) {
-        case 'remove':
-            confirmMessage = CMS_WATCHMAN_COMPUTER_CONFIG.translations.confirmBulkRemove;
-            break;
-        case 'sync':
-            confirmMessage = CMS_WATCHMAN_COMPUTER_CONFIG.translations.confirmBulkSync;
-            break;
-    }
-    
-    if (confirmMessage && !confirm(confirmMessage)) {
-        return;
-    }
-    
-    try {
-        const result = await cms_watchman_make_ajax_request('bulk_computer_action', {
-            bulk_action: action,
-            computer_ids: selected
-        });
-        
-        if (result.success) {
-            cms_watchman_show_notification(result.message, 'success');
-            
-            // Décocher tout et recharger
-            document.getElementById('cms_watchman_select_all_computers').checked = false;
-            document.querySelectorAll('.cms_watchman_computer_checkbox').forEach(cb => cb.checked = false);
-            cms_watchman_update_bulk_actions();
-            
-            cms_watchman_load_computer_data(cms_watchman_current_page);
-            cms_watchman_load_computer_statistics();
-        } else {
-            cms_watchman_show_notification(result.message, 'error');
-        }
-    } catch (error) {
-        cms_watchman_show_notification(error.message, 'error');
-    }
-}
 
 /**
  * Utilitaires

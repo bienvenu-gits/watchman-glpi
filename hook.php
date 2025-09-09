@@ -33,6 +33,7 @@ use GlpiPlugin\Watchman\AlertManager;
 use GlpiPlugin\Watchman\CronManager;
 use GlpiPlugin\Watchman\CronMigration;
 use GlpiPlugin\Watchman\CronSyncAlert;
+use GlpiPlugin\Watchman\CronSyncComputer;
 use GlpiPlugin\Watchman\WatchmanConfig;
 
 /**
@@ -47,47 +48,17 @@ function plugin_watchman_install()
    // Instancier la migration avec une version (ex. : 100)
    $migration = new Migration(100);
    $version = false;
-
-   // Créer la table uniquement si elle n'existe pas encore
-   //  if (!$DB->tableExists('glpi_plugin_watchman_configs')) {
-   //      $query = "CREATE TABLE `glpi_plugin_watchman_configs` (
-   //                  `id` INT(11) NOT NULL AUTO_INCREMENT,
-   //                  `public_key` VARCHAR(255) NOT NULL,
-   //                  `secret_key` VARCHAR(255) NOT NULL,
-   //                  PRIMARY KEY (`id`)
-   //               ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci ROW_FORMAT=DYNAMIC";
-   //      $DB->queryOrDie($query, $DB->error());
-   //  }
-   //  $default_charset   = DBConnection::getDefaultCharset();
-   //  $default_collation = DBConnection::getDefaultCollation();
-   //  $table = Superasset::getTable();
-   //  if (!$DB->tableExists($table)) {
-   //      //table creation query
-   //      $query = "CREATE TABLE `$table` (
-   //                `id`         int unsigned NOT NULL AUTO_INCREMENT,
-   //                `is_deleted` TINYINT NOT NULL DEFAULT '0',
-   //                `name`      VARCHAR(255) NOT NULL,
-   //                PRIMARY KEY  (`id`)
-   //               ) ENGINE=InnoDB
-   //               DEFAULT CHARSET={$default_charset}
-   //               COLLATE={$default_collation}";
-   //      $DB->queryOrDie($query, $DB->error());
-   //  }
-   
    //migrations here 
    WatchmanConfig::install($migration, $version);
    CronMigration::install($migration, $version);
    AlertManager::install($migration, $version);
 
-
    // Exécuter la migration
    $migration->executeMigration();
 
-
    //taches cron
    CronSyncAlert::installCronTasks();
-   // CronSyncAlert::installCronTasks();
-
+   CronSyncComputer::installCronTasks();
 
    return true;
 }
@@ -128,11 +99,9 @@ function plugin_watchman_uninstall()
       }
    }
    CronSyncAlert::uninstallCronTasks();
-   // CronSyncAlert::installCronTasks();
+   CronSyncComputer::uninstallCronTasks();
    CronManager::uninstallCronTasks();
    return true;
-
-   
 }
 
 

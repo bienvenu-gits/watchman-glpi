@@ -56,6 +56,20 @@ class CronSyncAlert extends CronManager
                 'logs_lifetime' => 30
             ]
         );
+        
+        // Monitoring et récupération des tâches bloquées
+        CronTask::register(
+            __CLASS__,
+            'MonitorTasks',
+            5 * MINUTE_TIMESTAMP, // Toutes les 5 minutes
+            [
+                'description' => __('Surveillance et récupération des tâches cron bloquées', 'watchman'),
+                'parameter' => __('Intervalle de vérification en minutes', 'watchman'),
+                'mode' => CronTask::MODE_EXTERNAL,
+                'allowmode' => CronTask::MODE_EXTERNAL,
+                'logs_lifetime' => 7
+            ]
+        );
     }
 
     /**
@@ -63,7 +77,7 @@ class CronSyncAlert extends CronManager
      */
     static function uninstallCronTasks()
     {
-        $tasks = ['SyncAlerts'];
+        $tasks = ['SyncAlerts', 'MonitorTasks'];
 
         $cron = new CronTask();
         foreach ($tasks as $task_name) {
@@ -81,7 +95,13 @@ class CronSyncAlert extends CronManager
      */
     static function cronSyncAlerts($task)
     {
-        ini_set('memory_limit', '500M');
+        // Configuration mémoire plus optimisée
+        ini_set('memory_limit', '1G');
+        ini_set('max_execution_time', 1800); // 30 minutes max
+        
+        // Démarrer le monitoring
+        CronMonitor::startMonitoring(__CLASS__ . '::cronSyncAlerts', $task->getID());
+        
         echo 'tache lancée';
         $start_time = microtime(true);
         $total_processed = 0;
@@ -91,6 +111,7 @@ class CronSyncAlert extends CronManager
         try {
             if (!self::canSync()) {
                 $task->log(__('Plugin non configuré ou désactivé', 'watchman'));
+                CronMonitor::stopMonitoring(__CLASS__ . '::cronSyncAlerts', $task->getID(), 'failed');
                 return 0;
             }
 
@@ -111,6 +132,13 @@ class CronSyncAlert extends CronManager
             $latest_updated_at = $last_updated_at;
 
             while ($has_more_pages) {
+                // Mettre à jour le heartbeat à chaque page
+                CronMonitor::updateHeartbeat(__CLASS__ . '::cronSyncAlerts', $task->getID(), [
+                    'current_page' => $page,
+                    'total_processed' => $total_processed,
+                    'memory_usage_mb' => round(memory_get_usage(true) / 1024 / 1024, 2)
+                ]);
+                
                 $task->log(sprintf(__('Traitement de la page %d', 'watchman'), $page));
                 $params=[
                     'page' => $page,
@@ -226,6 +254,20 @@ class CronSyncAlert extends CronManager
                 echo 'total_processed'.$total_processed.'\n';
                 echo 'max_alerts_per_batch'.$max_alerts_per_batch.'\n';
 
+                // Vérification de la mémoire pour éviter les dépassements
+                $memoryUsage = memory_get_usage(true);
+                $memoryLimit = self::parseMemoryLimit(ini_get('memory_limit'));
+                $memoryPercentage = ($memoryUsage / $memoryLimit) * 100;
+                
+                if ($memoryPercentage > 80) {
+                    $task->log(sprintf(
+                        __('Utilisation mémoire élevée (%.1f%%), arrêt préventif après %d alertes', 'watchman'),
+                        $memoryPercentage,
+                        $total_processed
+                    ));
+                    break;
+                }
+                
                 // Pause entre les pages pour éviter de surcharger l'API
                 if ($has_more_pages) {
                     sleep(1);
@@ -252,10 +294,17 @@ class CronSyncAlert extends CronManager
                 'tickets_created' => $total_tickets_created
             ]);
 
+            // Terminer le monitoring avec succès
+            CronMonitor::stopMonitoring(__CLASS__ . '::cronSyncAlerts', $task->getID(), 'completed');
+
             return ($total_errors > 0 && $total_processed == 0) ? 0 : 1;
         } catch (Exception $e) {
             $task->log(__('Erreur critique alertes: ', 'watchman') . $e->getMessage());
             Toolbox::logInFile('watchman_alerts_critical', $e->getMessage() . "\n" . $e->getTraceAsString());
+            
+            // Terminer le monitoring avec erreur
+            CronMonitor::stopMonitoring(__CLASS__ . '::cronSyncAlerts', $task->getID(), 'failed');
+            
             return 0;
         }
     }
@@ -470,6 +519,32 @@ class CronSyncAlert extends CronManager
     }
 
     /**
+     * Parse la limite mémoire PHP en octets
+     */
+    private static function parseMemoryLimit($memoryLimit)
+    {
+        $memoryLimit = strtoupper(trim($memoryLimit));
+        
+        if ($memoryLimit == '-1') {
+            return PHP_INT_MAX; // Pas de limite
+        }
+        
+        $value = (int) $memoryLimit;
+        $unit = substr($memoryLimit, -1);
+        
+        switch ($unit) {
+            case 'G':
+                $value *= 1024;
+            case 'M':
+                $value *= 1024;
+            case 'K':
+                $value *= 1024;
+        }
+        
+        return $value;
+    }
+
+    /**
      * Tâche CRON - Nettoyage des logs
      */
     static function cronCleanupLogs($task)
@@ -657,5 +732,31 @@ class CronSyncAlert extends CronManager
             'api_last_check' => $api_last_check,
             'can_sync' => self::canSync() && $api_status === 'healthy'
         ];
+    }
+
+    /**
+     * Tâche CRON - Monitoring des tâches bloquées
+     * 
+     * @param CronTask $task Instance de la tâche CRON
+     * @return int 0=échec, 1=succès
+     */
+    static function cronMonitorTasks($task)
+    {
+        try {
+            $task->log(__('Début du monitoring des tâches cron', 'watchman'));
+            
+            // Lancer la vérification des tâches bloquées
+            CronMonitor::runMonitoringCheck();
+            
+            $task->log(__('Monitoring des tâches terminé avec succès', 'watchman'));
+            $task->addVolume(1);
+            
+            return 1;
+            
+        } catch (Exception $e) {
+            $task->log(__('Erreur dans le monitoring: ', 'watchman') . $e->getMessage());
+            Toolbox::logInFile('watchman_monitor_error', $e->getMessage() . "\n" . $e->getTraceAsString());
+            return 0;
+        }
     }
 }
