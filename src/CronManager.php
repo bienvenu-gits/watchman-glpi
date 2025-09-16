@@ -175,7 +175,7 @@ class CronManager extends CommonDBTM {
         
         foreach ($metrics as $name => $value) {
             $DB->updateOrInsert(
-                'glpi_plugin_watchman_configs',
+                'glpi_plugin_watchman_watchmanconfigs',
                 ['name' => $name, 'value' => $value],
                 ['name' => $name]
             );

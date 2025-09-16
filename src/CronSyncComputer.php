@@ -127,7 +127,7 @@ class CronSyncComputer extends CronManager
 
                     // Mettre à jour le statut de synchronisation pour tous les ordinateurs traités
                     foreach ($assets_cleaned['assets'] as $computer_data) {
-                        self::updateComputerSyncStatus($computer_data['id'], 'success');
+                        self::updateComputerSyncStatus($computer_data['computer_glpi_id'], 'success');
                     }
 
                     $task->log(sprintf(__('%d ordinateurs synchronisés avec succès', 'watchman'), $processed));
@@ -686,6 +686,7 @@ class CronSyncComputer extends CronManager
                 $processed = count($assets_cleaned['assets']);
                 // Mettre à jour le statut de tous les ordinateurs
                 foreach ($assets_cleaned['assets'] as $asset_cleaned) {
+                    var_dump($asset_cleaned);
                     self::updateComputerSyncStatus($asset_cleaned['computer_glpi_id'],'success');
                 }
             } else {

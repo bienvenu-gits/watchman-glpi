@@ -93,222 +93,241 @@ class CronSyncAlert extends CronManager
      * @param CronTask $task Instance de la tâche CRON
      * @return int 0=échec, 1=succès
      */
-    static function cronSyncAlerts($task)
-    {
-        // Configuration mémoire plus optimisée
-        ini_set('memory_limit', '1G');
-        ini_set('max_execution_time', 1800); // 30 minutes max
-        
-        // Démarrer le monitoring
-        CronMonitor::startMonitoring(__CLASS__ . '::cronSyncAlerts', $task->getID());
-        
-        echo 'tache lancée';
-        $start_time = microtime(true);
-        $total_processed = 0;
-        $total_errors = 0;
-        $total_tickets_created = 0;
-
-        try {
-            if (!self::canSync()) {
-                $task->log(__('Plugin non configuré ou désactivé', 'watchman'));
-                CronMonitor::stopMonitoring(__CLASS__ . '::cronSyncAlerts', $task->getID(), 'failed');
-                return 0;
+   static function cronSyncAlerts($task)
+{
+    // Configuration mémoire plus optimisée
+    ini_set('memory_limit', '1G');
+    ini_set('max_execution_time', 1800); // 30 minutes max
+    
+    // Gestionnaire d'erreur fatale pour intercepter le timeout
+    register_shutdown_function(function() use ($task) {
+        $error = error_get_last();
+        if ($error && ($error['type'] === E_ERROR || $error['type'] === E_USER_ERROR)) {
+            if (strpos($error['message'], 'Maximum execution time') !== false) {
+                // Timeout PHP détecté, marquer la tâche comme terminée
+                $task->log(__('Timeout PHP détecté, marquage de la tâche comme terminée', 'watchman'));
+                echo "Timeout détecté, fin de tâche forcée\n";
+                
+                // Terminer le monitoring
+                CronMonitor::stopMonitoring(__CLASS__ . '::cronSyncAlerts', $task->getID(), 'timeout');
+                
+                // Marquer la tâche comme terminée dans GLPI
+                $task->fields['state'] = 1; // 0 = terminée
+                $task->fields['end'] = $_SESSION['glpi_currenttime'];
+                $task->update($task->fields);
             }
+        }
+    });
+    
+    // Démarrer le monitoring
+    CronMonitor::startMonitoring(__CLASS__ . '::cronSyncAlerts', $task->getID());
+    
+    echo 'tache lancée';
+    $start_time = microtime(true);
+    $total_processed = 0;
+    $total_errors = 0;
+    $total_tickets_created = 0;
 
-            $max_alerts_per_batch = $task->fields['param'] ?? self::DEFAULT_BATCH_SIZE;
-
-            $api_client = new WatchmanApiClient();
-
-            $task->log(__('Début de la synchronisation des alertes avec pagination', 'watchman'));
-            echo __('Début de la synchronisation des alertes avec pagination', 'watchman');
-
-            // Récupération de la dernière date de mise à jour synchronisée
-            $last_updated_at = WatchmanConfig::getConfigValue('last_alert_updated_at', null);
-            $task->log(sprintf(__('Récupération des alertes modifiées depuis: %s', 'watchman'), $last_updated_at));
-
-            // Pagination des alertes
-            $page = 1;
-            $has_more_pages = true;
-            $latest_updated_at = $last_updated_at;
-
-            while ($has_more_pages) {
-                // Mettre à jour le heartbeat à chaque page
-                CronMonitor::updateHeartbeat(__CLASS__ . '::cronSyncAlerts', $task->getID(), [
-                    'current_page' => $page,
-                    'total_processed' => $total_processed,
-                    'memory_usage_mb' => round(memory_get_usage(true) / 1024 / 1024, 2)
-                ]);
-                
-                $task->log(sprintf(__('Traitement de la page %d', 'watchman'), $page));
-                $params=[
-                    'page' => $page,
-                    'page_size' => self::PAGINATION_LIMIT,
-                    'ordering' => 'updated_at' // Tri par date de mise à jour croissante
-                ];
-                if($last_updated_at!=null){
-                    $params['updated_at__gte']=$last_updated_at;
-                }
-
-                // Récupération des alertes avec pagination
-                $alerts_response = $api_client->getAlerts( $params);
-               
-
-                if (!$alerts_response['success']) {
-                    $task->log(__('Erreur récupération alertes page ', 'watchman') . $page . ': ' . $alerts_response['error']);
-                    break;
-                }
-
-                $pagination_data = $alerts_response['data'] ?? [];
-                $alerts = $pagination_data['results'] ?? [];
-                $next_page = $pagination_data['next'] ?? null;
-
-                echo 'Pagination next'.$next_page;
-                // echo json_encode($pagination_data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) . "\n";
-
-                if (empty($alerts)) {
-                    $task->log(__('Aucune alerte trouvée sur cette page', 'watchman'));
-                    break;
-                }
-
-                $task->log(sprintf(__('%d alertes reçues sur la page %d', 'watchman'), count($alerts), $page));
-
-                // Traitement des alertes de cette page
-                $page_processed = 0;
-                $page_errors = 0;
-                $page_tickets_created = 0;
-
-                $alert_manager = new AlertManager();
-
-                foreach ($alerts as $alert_data) {
-                    try {
-                        // Limitation par batch si configurée
-                        // if ($total_processed >= $max_alerts_per_batch && $max_alerts_per_batch > 0) {
-                        //     $task->log(sprintf(__('Limite de %d alertes atteinte, arrêt du traitement', 'watchman'), $max_alerts_per_batch));
-                        //     $has_more_pages = false;
-                        //     break;
-                        // }
-
-                        // Traitement de l'alerte
-                        $result = $alert_manager->processAlert($alert_data);
-
-                        if ($result['success']) {
-                            $page_processed++;
-                            $total_processed++;
-
-                            // Création d'un ticket pour cette alerte si elle est nouvelle ou critique
-                            if ($result['is_new'] || $result['is_critical']) {
-                                $ticket_result = self::createTicketForAlert($alert_data, $result['alert_id']);
-                                if ($ticket_result['success']) {
-                                    $page_tickets_created++;
-                                    $total_tickets_created++;
-
-                                    // Mise à jour de l'alerte avec l'ID du ticket
-                                    $alert_manager->linkAlertToTicket($result['alert_id'], $ticket_result['ticket_id']);
-                                }
-                            }
-
-                            $task->addVolume(1);
-
-                            // Mise à jour de la dernière date updated_at
-                            if (isset($alert_data['updated_at'])) {
-                                WatchmanConfig::saveConfig([
-                                    'last_alert_updated_at' => $alert_data['updated_at'],
-                                ]);
-                            }
-                        } else {
-                            $page_errors++;
-                            $total_errors++;
-                            $task->log(sprintf(
-                                __('Erreur traitement alerte ID %s: %s', 'watchman'),
-                                $alert_data['id'] ?? 'inconnu',
-                                $result['error']
-                            ));
-                        }
-                    } catch (Exception $e) {
-                        $page_errors++;
-                        $total_errors++;
-                        $error_msg = sprintf(
-                            __('Exception alerte ID %s: %s', 'watchman'),
-                            $alert_data['id'] ?? 'inconnu',
-                            $e->getMessage()
-                        );
-                        echo $error_msg;
-                        $task->log($error_msg);
-                        Toolbox::logInFile('watchman_alerts_error', $error_msg);
-                    }
-                }
-
-                $task->log(sprintf(
-                    __('Page %d terminée - %d alertes traitées, %d tickets créés, %d erreurs', 'watchman'),
-                    $page,
-                    $page_processed,
-                    $page_tickets_created,
-                    $page_errors
-                ));
-
-                // Vérification s'il y a une page suivante
-                // $has_more_pages = ($next_page !== null) && ($total_processed < $max_alerts_per_batch || $max_alerts_per_batch == 0);
-                $has_more_pages = $next_page !== null;
-                $page++;
-                echo 'has more pages '.$has_more_pages.'\n';
-                echo 'total_processed'.$total_processed.'\n';
-                echo 'max_alerts_per_batch'.$max_alerts_per_batch.'\n';
-
-                // Vérification de la mémoire pour éviter les dépassements
-                $memoryUsage = memory_get_usage(true);
-                $memoryLimit = self::parseMemoryLimit(ini_get('memory_limit'));
-                $memoryPercentage = ($memoryUsage / $memoryLimit) * 100;
-                
-                if ($memoryPercentage > 80) {
-                    $task->log(sprintf(
-                        __('Utilisation mémoire élevée (%.1f%%), arrêt préventif après %d alertes', 'watchman'),
-                        $memoryPercentage,
-                        $total_processed
-                    ));
-                    break;
-                }
-                
-                // Pause entre les pages pour éviter de surcharger l'API
-                if ($has_more_pages) {
-                    sleep(1);
-                }
-            }
-
-            
-
-            // Statistiques finales
-            $duration = round(microtime(true) - $start_time, 2);
-            $task->log(sprintf(
-                __('Synchronisation terminée - %d alertes traitées, %d tickets créés, %d erreurs en %s secondes', 'watchman'),
-                $total_processed,
-                $total_tickets_created,
-                $total_errors,
-                $duration
-            ));
-
-            // Mise à jour des métriques
-            // self::updateSyncMetrics('alerts', $total_processed, $total_errors, $duration);
-            WatchmanConfig::saveConfig([
-                'alerts_processed' => $total_processed,
-                'alerts_errors' => $total_errors,
-                'tickets_created' => $total_tickets_created
-            ]);
-
-            // Terminer le monitoring avec succès
-            CronMonitor::stopMonitoring(__CLASS__ . '::cronSyncAlerts', $task->getID(), 'completed');
-
-            return ($total_errors > 0 && $total_processed == 0) ? 0 : 1;
-        } catch (Exception $e) {
-            $task->log(__('Erreur critique alertes: ', 'watchman') . $e->getMessage());
-            Toolbox::logInFile('watchman_alerts_critical', $e->getMessage() . "\n" . $e->getTraceAsString());
-            
-            // Terminer le monitoring avec erreur
+    try {
+        if (!self::canSync()) {
+            $task->log(__('Plugin non configuré ou désactivé', 'watchman'));
             CronMonitor::stopMonitoring(__CLASS__ . '::cronSyncAlerts', $task->getID(), 'failed');
-            
             return 0;
         }
-    }
 
+        $max_alerts_per_batch = $task->fields['param'] ?? self::DEFAULT_BATCH_SIZE;
+
+        $api_client = new WatchmanApiClient();
+
+        $task->log(__('Début de la synchronisation des alertes avec pagination', 'watchman'));
+        echo __('Début de la synchronisation des alertes avec pagination', 'watchman');
+
+        // Récupération de la dernière date de mise à jour synchronisée
+        $last_updated_at = WatchmanConfig::getConfigValue('last_alert_updated_at', null);
+        $task->log(sprintf(__('Récupération des alertes modifiées depuis: %s', 'watchman'), $last_updated_at));
+
+        // Pagination des alertes
+        $page = 1;
+        $has_more_pages = true;
+        $latest_updated_at = $last_updated_at;
+
+        while ($has_more_pages) {
+            // Mettre à jour le heartbeat à chaque page
+            CronMonitor::updateHeartbeat(__CLASS__ . '::cronSyncAlerts', $task->getID(), [
+                'current_page' => $page,
+                'total_processed' => $total_processed,
+                'memory_usage_mb' => round(memory_get_usage(true) / 1024 / 1024, 2)
+            ]);
+            
+            $task->log(sprintf(__('Traitement de la page %d', 'watchman'), $page));
+            $params=[
+                'page' => $page,
+                'page_size' => self::PAGINATION_LIMIT,
+                'ordering' => 'updated_at' // Tri par date de mise à jour croissante
+            ];
+            if($last_updated_at!=null){
+                $params['updated_at__gte']=$last_updated_at;
+            }
+
+            // Récupération des alertes avec pagination
+            $alerts_response = $api_client->getAlerts( $params);
+           
+
+            if (!$alerts_response['success']) {
+                $task->log(__('Erreur récupération alertes page ', 'watchman') . $page . ': ' . $alerts_response['error']);
+                break;
+            }
+
+            $pagination_data = $alerts_response['data'] ?? [];
+            $alerts = $pagination_data['results'] ?? [];
+            $next_page = $pagination_data['next'] ?? null;
+
+            echo 'Pagination next'.$next_page;
+            // echo json_encode($pagination_data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) . "\n";
+
+            if (empty($alerts)) {
+                $task->log(__('Aucune alerte trouvée sur cette page', 'watchman'));
+                break;
+            }
+
+            $task->log(sprintf(__('%d alertes reçues sur la page %d', 'watchman'), count($alerts), $page));
+
+            // Traitement des alertes de cette page
+            $page_processed = 0;
+            $page_errors = 0;
+            $page_tickets_created = 0;
+
+            $alert_manager = new AlertManager();
+
+            foreach ($alerts as $alert_data) {
+                try {
+                    // Limitation par batch si configurée
+                    // if ($total_processed >= $max_alerts_per_batch && $max_alerts_per_batch > 0) {
+                    //     $task->log(sprintf(__('Limite de %d alertes atteinte, arrêt du traitement', 'watchman'), $max_alerts_per_batch));
+                    //     $has_more_pages = false;
+                    //     break;
+                    // }
+
+                    // Traitement de l'alerte
+                    $result = $alert_manager->processAlert($alert_data);
+
+                    if ($result['success']) {
+                        $page_processed++;
+                        $total_processed++;
+
+                        // Création d'un ticket pour cette alerte si elle est nouvelle ou critique
+                        if ($result['is_new'] || $result['is_critical']) {
+                            $ticket_result = self::createTicketForAlert($alert_data, $result['alert_id']);
+                            if ($ticket_result['success']) {
+                                $page_tickets_created++;
+                                $total_tickets_created++;
+
+                                // Mise à jour de l'alerte avec l'ID du ticket
+                                $alert_manager->linkAlertToTicket($result['alert_id'], $ticket_result['ticket_id']);
+                            }
+                        }
+
+                        $task->addVolume(1);
+
+                        // Mise à jour de la dernière date updated_at
+                        if (isset($alert_data['updated_at'])) {
+                            WatchmanConfig::saveConfig([
+                                'last_alert_updated_at' => $alert_data['updated_at'],
+                            ]);
+                        }
+                    } else {
+                        $page_errors++;
+                        $total_errors++;
+                        $task->log(sprintf(
+                            __('Erreur traitement alerte ID %s: %s', 'watchman'),
+                            $alert_data['id'] ?? 'inconnu',
+                            $result['error']
+                        ));
+                    }
+                } catch (Exception $e) {
+                    $page_errors++;
+                    $total_errors++;
+                    $error_msg = sprintf(
+                        __('Exception alerte ID %s: %s', 'watchman'),
+                        $alert_data['id'] ?? 'inconnu',
+                        $e->getMessage()
+                    );
+                    echo $error_msg;
+                    $task->log($error_msg);
+                    Toolbox::logInFile('watchman_alerts_error', $error_msg);
+                }
+            }
+
+            $task->log(sprintf(
+                __('Page %d terminée - %d alertes traitées, %d tickets créés, %d erreurs', 'watchman'),
+                $page,
+                $page_processed,
+                $page_tickets_created,
+                $page_errors
+            ));
+
+            // Vérification s'il y a une page suivante
+            // $has_more_pages = ($next_page !== null) && ($total_processed < $max_alerts_per_batch || $max_alerts_per_batch == 0);
+            $has_more_pages = $next_page !== null;
+            $page++;
+            echo 'has more pages '.$has_more_pages.'\n';
+            echo 'total_processed'.$total_processed.'\n';
+            echo 'max_alerts_per_batch'.$max_alerts_per_batch.'\n';
+
+            // Vérification de la mémoire pour éviter les dépassements
+            $memoryUsage = memory_get_usage(true);
+            $memoryLimit = self::parseMemoryLimit(ini_get('memory_limit'));
+            $memoryPercentage = ($memoryUsage / $memoryLimit) * 100;
+            
+            if ($memoryPercentage > 80) {
+                $task->log(sprintf(
+                    __('Utilisation mémoire élevée (%.1f%%), arrêt préventif après %d alertes', 'watchman'),
+                    $memoryPercentage,
+                    $total_processed
+                ));
+                break;
+            }
+            
+            // Pause entre les pages pour éviter de surcharger l'API
+            if ($has_more_pages) {
+                sleep(1);
+            }
+        }
+
+        
+
+        // Statistiques finales
+        $duration = round(microtime(true) - $start_time, 2);
+        $task->log(sprintf(
+            __('Synchronisation terminée - %d alertes traitées, %d tickets créés, %d erreurs en %s secondes', 'watchman'),
+            $total_processed,
+            $total_tickets_created,
+            $total_errors,
+            $duration
+        ));
+
+        // Mise à jour des métriques
+        // self::updateSyncMetrics('alerts', $total_processed, $total_errors, $duration);
+        WatchmanConfig::saveConfig([
+            'alerts_processed' => $total_processed,
+            'alerts_errors' => $total_errors,
+            'tickets_created' => $total_tickets_created
+        ]);
+
+        // Terminer le monitoring avec succès
+        CronMonitor::stopMonitoring(__CLASS__ . '::cronSyncAlerts', $task->getID(), 'completed');
+
+        return ($total_errors > 0 && $total_processed == 0) ? 0 : 1;
+    } catch (Exception $e) {
+        $task->log(__('Erreur critique alertes: ', 'watchman') . $e->getMessage());
+        Toolbox::logInFile('watchman_alerts_critical', $e->getMessage() . "\n" . $e->getTraceAsString());
+        
+        // Terminer le monitoring avec erreur
+        CronMonitor::stopMonitoring(__CLASS__ . '::cronSyncAlerts', $task->getID(), 'failed');
+        
+        return 0;
+    }
+}
     /**
      * Création d'un ticket GLPI pour une alerte
      * 
