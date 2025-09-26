@@ -52,6 +52,7 @@ class WatchmanManager extends CommonDBTM
         TemplateRenderer::getInstance()->display('@watchman/pages/alerts.html.twig', [
             'item'   => $this,
             'base_url' => $CFG_GLPI["root_doc"],
+            'current_page' => 'alertmanager',
             'csrf_token' => Session::getNewCSRFToken(),  // if you need CSRF token
         ]);
         
@@ -67,6 +68,7 @@ class WatchmanManager extends CommonDBTM
             TemplateRenderer::getInstance()->display('@watchman/pages/computer_detail.html.twig', [
                 'item'   => $this,
                 'base_url' => $CFG_GLPI["root_doc"],
+                'current_page' => 'computermapping',
                 'csrf_token' => Session::getNewCSRFToken(),
             ]);
             return true;
@@ -80,6 +82,7 @@ class WatchmanManager extends CommonDBTM
             'item'   => $this,
             'computers' => $computers,
             'base_url' => $CFG_GLPI["root_doc"],
+            'current_page' => 'computermapping',
             'csrf_token' => Session::getNewCSRFToken(),
         ]);
         

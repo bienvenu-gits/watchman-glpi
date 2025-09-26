@@ -110,8 +110,7 @@ rel="stylesheet" type="text/css" href="{{ base_url }}/plugins/watchman/assets/cs
                 <div class="cms_watchman_content_main_body hidden">
                     {% block content %}
                         <!-- Statistiques -->
-                        <div class="cms_watchman_alert_statistic_row">
-                            <!-- Carte Ordinateurs Synchronisés -->
+                        {# <div class="cms_watchman_alert_statistic_row">
                             <div class="cms_watchman_alert_statistic_card" style="background: linear-gradient(90deg, #02AAB0 0%, #00B295 100%); margin-left:0px; max-width: 100%;">
                                 <div class="cms_watchman_alert_statistic_card_text">
                                     <h1 class="cms_watchman_alert_statistic_card_text_heading">{{ __('Ordinateurs synchronisés', 'watchman') }}</h1>
@@ -123,7 +122,7 @@ rel="stylesheet" type="text/css" href="{{ base_url }}/plugins/watchman/assets/cs
                                     </div>
                                 </div>
                             </div>
-                        </div>
+                        </div> #}
 
                         <!-- Conteneur de filtres -->
                         <div class="cms_watchman_filter_container">
@@ -374,7 +373,7 @@ function cms_watchman_render_computers_table() {
                 ${computer.last_sync_date ? new Date(computer.last_sync_date).toLocaleDateString('fr-FR') + '<br><small>' + new Date(computer.last_sync_date).toLocaleTimeString('fr-FR', {hour: '2-digit', minute: '2-digit'}) + '</small>' : '<span class="text-muted">Jamais</span>'}
             </td>
             <td>
-                ${computer.computers_id ? `<a href="${CMS_WATCHMAN_COMPUTER_CONFIG.baseUrl}/front/computer.form.php?id=${computer.computers_id}" class="cms_watchman_btn cms_watchman_btn-outline-primary btn-sm" target="_blank"><i class="fas fa-desktop me-1"></i>GLPI</a>` : '<span class="text-muted">Non lié</span>'}
+                ${computer.computers_id ? `<a href="${CMS_WATCHMAN_COMPUTER_CONFIG.baseUrl}/front/computer.form.php?id=${computer.computers_id}" class="cms_watchman_btn cms_watchman_btn-primary btn-sm" target="_blank"><i class="fas fa-desktop me-1"></i>GLPI</a>` : '<span class="text-muted">Non lié</span>'}
             </td>
             <td>
                 ${cms_watchman_render_computer_actions(computer)}
@@ -611,8 +610,6 @@ async function makeRequest(action, params = null, method = 'GET', data = null) {
         
         const response = await fetch(url, options);
 
-        
-        
         if (!response.ok) {
             throw new Error(`HTTP ${response.status}: ${response.statusText}`);
         }

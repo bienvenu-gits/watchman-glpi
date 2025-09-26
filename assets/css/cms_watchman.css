@@ -61,7 +61,6 @@ body{
   text-decoration: none;
   outline: none;
   border: none;
-  color: var(--brand-500);
 }
 
 
@@ -631,6 +630,13 @@ select.cms_watchman_form-control {
 
 /* État au survol (hover) */
 .cms_watchman_btn:hover {
+  background-color: var(
+    --brand-500
+  ); /* Couleur de fond plus foncée (brand.600) */
+  color: #ffffff; /* Maintient le texte en blanc */
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Ombre pour effet de profondeur */
+}
+a.cms_watchman_btn:hover,a.cms_watchman_btn:active {
   background-color: var(
     --brand-500
   ); /* Couleur de fond plus foncée (brand.600) */

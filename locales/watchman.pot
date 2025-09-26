@@ -1,0 +1,1653 @@
+# GLPI Plugin Watchman - Portable Object Template
+# Copyright (C) 2025 Global IT Service
+# This file is distributed under the same license as the Watchman package.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: GLPI Plugin Watchman\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-09-21 15:40+0000\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+
+#: ajax\watchman.php
+msgid "Données invalides"
+msgstr ""
+
+#: ajax\watchman.php
+msgid "Action non reconnue"
+msgstr ""
+
+#: ajax\watchman.php
+msgid "Droits insuffisants"
+msgstr ""
+
+#: ajax\watchman.php
+msgid "Synchronisation démarrée avec succès"
+msgstr ""
+
+#: ajax\watchman.php
+#: ajax\watchman.php
+#: src\AlertManager.php
+msgid "Alerte non trouvée"
+msgstr ""
+
+#: ajax\watchman.php
+msgid "Un ticket existe déjà pour cette alerte"
+msgstr ""
+
+#: ajax\watchman.php
+#: src\CronSyncAlert.php
+msgid "Ticket #%d créé avec succès"
+msgstr ""
+
+#: ajax\watchman.php
+#: src\AlertManager.php
+#: src\AlertManager.php
+#: templates\pages\alert_detail.html.twig
+#: templates\pages\alert_detail.html.twig
+msgid "Alerte introuvable"
+msgstr ""
+
+#: ajax\watchman.php
+#: ajax\watchman.php
+#: src\AlertManager.php
+#: src\AlertManager.php
+msgid "Erreur lors de la mise à jour"
+msgstr ""
+
+#: ajax\watchman.php
+#: src\AlertManager.php
+msgid "ID de ticket invalide"
+msgstr ""
+
+#: ajax\watchman.php
+#: src\AlertManager.php
+msgid "Ticket introuvable"
+msgstr ""
+
+#: ajax\watchman.php
+#: src\AlertManager.php
+msgid "Erreur lors de la mise à jour du ticket"
+msgstr ""
+
+#: ajax\watchman.php
+#: src\AlertManager.php
+msgid "Alerte marquée comme faux positif"
+msgstr ""
+
+#: ajax\watchman.php
+msgid "Alerte retirée des faux positifs"
+msgstr ""
+
+#: ajax\watchman.php
+#: ajax\watchman.php
+msgid "Droits insuffisants pour supprimer"
+msgstr ""
+
+#: ajax\watchman.php
+msgid "Erreur lors de la suppression"
+msgstr ""
+
+#: ajax\watchman.php
+msgid "Alerte supprimée avec succès"
+msgstr ""
+
+#: ajax\watchman.php
+#: templates\alerts.html.twig
+msgid "Aucune alerte sélectionnée"
+msgstr ""
+
+#: ajax\watchman.php
+msgid "%d alerte(s) marquée(s) comme corrigée(s)"
+msgstr ""
+
+#: ajax\watchman.php
+msgid "%d alerte(s) marquée(s) comme faux positifs"
+msgstr ""
+
+#: ajax\watchman.php
+msgid "%d ticket(s) créé(s)"
+msgstr ""
+
+#: ajax\watchman.php
+msgid "%d alerte(s) supprimée(s)"
+msgstr ""
+
+#: ajax\watchman.php
+msgid "Action groupée non reconnue"
+msgstr ""
+
+#: ajax\watchman.php
+#: src\AlertManager.php
+#: templates\alerts.html.twig
+#: templates\alerts.html.twig
+#: templates\alerts.html.twig
+#: templates\alert_detail.html.twig
+#: templates\alert_detail.html.twig
+msgid "Corrigée"
+msgstr ""
+
+#: ajax\watchman.php
+#: src\AlertManager.php
+#: templates\alerts.html.twig
+#: templates\alert_detail.html.twig
+#: templates\alert_detail.html.twig
+#: templates\computer_mappings.html.twig
+#: templates\computer_mappings.html.twig
+#: templates\pages\computer_mappings.html.twig
+msgid "En attente"
+msgstr ""
+
+#: ajax\watchman.php
+msgid "Une alerte de sécurité a été détectée:\\n\\n"
+msgstr ""
+
+#: ajax\watchman.php
+msgid "CVE: %s\\n"
+msgstr ""
+
+#: ajax\watchman.php
+msgid "Titre: %s\\n"
+msgstr ""
+
+#: ajax\watchman.php
+msgid "Description: %s\\n\\n"
+msgstr ""
+
+#: ajax\watchman.php
+msgid "Sévérité: %s\\n"
+msgstr ""
+
+#: ajax\watchman.php
+msgid "Score CVSS: %s\\n"
+msgstr ""
+
+#: ajax\watchman.php
+msgid "Date de détection: %s\\n\\n"
+msgstr ""
+
+#: ajax\watchman.php
+msgid "Veuillez vérifier et appliquer les correctifs nécessaires."
+msgstr ""
+
+#: ajax\watchman.php
+#: src\AlertManager.php
+#: templates\alerts.html.twig
+#: templates\alerts.html.twig
+#: templates\alerts.html.twig
+#: templates\alert_detail.html.twig
+#: templates\pages\alerts.html.twig
+msgid "Critique"
+msgstr ""
+
+#: ajax\watchman.php
+#: src\AlertManager.php
+#: templates\alerts.html.twig
+#: templates\alerts.html.twig
+#: templates\alerts.html.twig
+#: templates\alert_detail.html.twig
+#: templates\pages\alerts.html.twig
+msgid "Élevée"
+msgstr ""
+
+#: ajax\watchman.php
+#: src\AlertManager.php
+#: templates\alerts.html.twig
+#: templates\alerts.html.twig
+#: templates\alert_detail.html.twig
+#: templates\pages\alerts.html.twig
+msgid "Moyenne"
+msgstr ""
+
+#: ajax\watchman.php
+#: src\AlertManager.php
+#: templates\alerts.html.twig
+#: templates\alerts.html.twig
+#: templates\alert_detail.html.twig
+#: templates\pages\alerts.html.twig
+msgid "Faible"
+msgstr ""
+
+#: ajax\watchman.php
+msgid "Alerte sécurité: %s"
+msgstr ""
+
+#: ajax\watchman.php
+msgid "Échec de création du ticket"
+msgstr ""
+
+#: front\myobject.php
+msgid "My example plugin"
+msgstr ""
+
+#: front\watchmanprofile.form.php
+msgid "Droits mis à jour avec succès"
+msgstr ""
+
+#: front\watchmanprofile.form.php
+msgid "Gestion des profils Watchman"
+msgstr ""
+
+#: front\watchmanprofile.form.php
+msgid "Gestion des droits Watchman"
+msgstr ""
+
+#: front\watchmanprofile.form.php
+msgid "Sélectionner un profil"
+msgstr ""
+
+#: front\watchmanprofile.form.php
+#: front\watchmanprofile.form.php
+msgid "Profil"
+msgstr ""
+
+#: front\watchmanprofile.form.php
+msgid "Mettre à jour les droits"
+msgstr ""
+
+#: front\watchmanprofile.form.php
+msgid "Profils ayant accès à Watchman"
+msgstr ""
+
+#: front\watchmanprofile.form.php
+#: templates\computer_mappings.html.twig
+msgid "Voir alertes"
+msgstr ""
+
+#: front\watchmanprofile.form.php
+msgid "Gérer alertes"
+msgstr ""
+
+#: front\watchmanprofile.form.php
+msgid "Administration"
+msgstr ""
+
+#: front\watchmanprofile.form.php
+#: src\WatchmanConfig.php
+#: src\WatchmanManager.php
+#: templates\pages\config.html.twig
+msgid "Configuration"
+msgstr ""
+
+#: front\watchmanprofile.form.php
+msgid "Tâches CRON"
+msgstr ""
+
+#: front\watchmanprofile.form.php
+msgid "Informations sur les droits"
+msgstr ""
+
+#: front\watchmanprofile.form.php
+msgid "Droit"
+msgstr ""
+
+#: front\watchmanprofile.form.php
+#: src\AlertManager.php
+#: templates\alerts.html.twig
+#: templates\alert_detail.html.twig
+#: templates\pages\alert_detail.html.twig
+msgid "Description"
+msgstr ""
+
+#: setup.php
+msgid "Installed / not configured"
+msgstr ""
+
+#: src\AlertManager.php
+#: src\WatchmanManager.php
+#: templates\alert_detail.html.twig
+#: templates\computer_mappings.html.twig
+#: templates\computer_mappings.html.twig
+#: templates\pages\alerts.html.twig
+#: templates\pages\computer_detail.html.twig
+msgid "Alertes"
+msgstr ""
+
+#: src\AlertManager.php
+#: src\AlertManager.php
+#: templates\alert_detail.html.twig
+#: templates\alert_detail.html.twig
+#: templates\alert_detail.html.twig
+#: templates\components\config.form.html.twig
+#: templates\config.form.html.twig
+msgid "Inconnu"
+msgstr ""
+
+#: src\AlertManager.php
+msgid "Il y a %d minute(s)"
+msgstr ""
+
+#: src\AlertManager.php
+msgid "Il y a %d heure(s)"
+msgstr ""
+
+#: src\AlertManager.php
+msgid "Il y a %d jour(s)"
+msgstr ""
+
+#: src\AlertManager.php
+msgid "Utilisateur"
+msgstr ""
+
+#: src\AlertManager.php
+msgid "Système"
+msgstr ""
+
+#: src\AlertManager.php
+#: src\AlertManager.php
+msgid "Alerte marquée comme corrigée"
+msgstr ""
+
+#: src\AlertManager.php
+msgid "Faux positif retiré"
+msgstr ""
+
+#: src\AlertManager.php
+msgid "Vulnérabilité %s - %s"
+msgstr ""
+
+#: src\AlertManager.php
+#: templates\alert_detail.html.twig
+msgid "Application"
+msgstr ""
+
+#: src\AlertManager.php
+msgid "Ticket #%d créé"
+msgstr ""
+
+#: src\AlertManager.php
+msgid "Informations sur la vulnérabilité"
+msgstr ""
+
+#: src\AlertManager.php
+msgid "CVE ID"
+msgstr ""
+
+#: src\AlertManager.php
+#: templates\alerts.html.twig
+#: templates\alerts.html.twig
+#: templates\dashboard.html.twig
+#: templates\pages\alerts.html.twig
+msgid "Titre"
+msgstr ""
+
+#: src\AlertManager.php
+#: templates\alerts.html.twig
+msgid "Score CVSS"
+msgstr ""
+
+#: src\AlertManager.php
+#: templates\alerts.html.twig
+#: templates\alerts.html.twig
+#: templates\dashboard.html.twig
+#: templates\pages\alerts.html.twig
+#: templates\pages\alerts.html.twig
+#: templates\pages\alert_detail.html.twig
+msgid "Sévérité"
+msgstr ""
+
+#: src\AlertManager.php
+msgid "Date de publication"
+msgstr ""
+
+#: src\AlertManager.php
+#: templates\alert_detail.html.twig
+msgid "Application concernée"
+msgstr ""
+
+#: src\AlertManager.php
+#: templates\alert_detail.html.twig
+#: templates\pages\alert_detail.html.twig
+#: templates\pages\alert_detail.html.twig
+#: templates\pages\computer_detail.html.twig
+msgid "Nom"
+msgstr ""
+
+#: src\AlertManager.php
+#: templates\alert_detail.html.twig
+#: templates\alert_detail.html.twig
+#: templates\pages\alert_detail.html.twig
+#: templates\pages\alert_detail.html.twig
+#: templates\pages\computer_detail.html.twig
+msgid "Version"
+msgstr ""
+
+#: src\AlertManager.php
+#: templates\alert_detail.html.twig
+msgid "Type"
+msgstr ""
+
+#: src\AlertManager.php
+#: templates\computer_mappings.html.twig
+msgid "Détails techniques"
+msgstr ""
+
+#: src\AlertManager.php
+#: templates\alert_detail.html.twig
+msgid "Complexité"
+msgstr ""
+
+#: src\AlertManager.php
+msgid "Alerte supprimée"
+msgstr ""
+
+#: src\AlertManager.php
+msgid "Alerte %s avec succès"
+msgstr ""
+
+#: src\AlertManager.php
+msgid "Alerte liée au ticket #%d avec succès"
+msgstr ""
+
+#: src\AlertManager.php
+msgid "Échec de la liaison avec le ticket"
+msgstr ""
+
+#: src\AlertManager.php
+msgid "Impossible de créer les dépendances CVE ou Stack"
+msgstr ""
+
+#: src\AlertManager.php
+msgid "ID du ticket est requis"
+msgstr ""
+
+#: src\ComputerManager.php
+#: src\WatchmanManager.php
+#: templates\computer_mappings.html.twig
+#: templates\pages\computer_mappings.html.twig
+#: templates\pages\computer_mappings.html.twig
+msgid "Ordinateurs synchronisés"
+msgstr ""
+
+#: src\CronManager.php
+msgid "Nettoyage des logs de synchronisation"
+msgstr ""
+
+#: src\CronManager.php
+msgid "API opérationnelle - Latence: %dms"
+msgstr ""
+
+#: src\CronManager.php
+msgid "API en panne: %s"
+msgstr ""
+
+#: src\CronManager.php
+msgid "Erreur health check: "
+msgstr ""
+
+#: src\CronManager.php
+msgid "Gestionnaire CRON"
+msgstr ""
+
+#: src\CronSyncAlert.php
+msgid "Surveillance et récupération des tâches cron bloquées"
+msgstr ""
+
+#: src\CronSyncAlert.php
+msgid "Intervalle de vérification en minutes"
+msgstr ""
+
+#: src\CronSyncAlert.php
+msgid "Timeout PHP détecté, marquage de la tâche comme terminée"
+msgstr ""
+
+#: src\CronSyncAlert.php
+#: src\CronSyncComputer.php
+msgid "Plugin non configuré ou désactivé"
+msgstr ""
+
+#: src\CronSyncAlert.php
+#: src\CronSyncAlert.php
+msgid "Début de la synchronisation des alertes avec pagination"
+msgstr ""
+
+#: src\CronSyncAlert.php
+msgid "Récupération des alertes modifiées depuis: %s"
+msgstr ""
+
+#: src\CronSyncAlert.php
+msgid "Traitement de la page %d"
+msgstr ""
+
+#: src\CronSyncAlert.php
+msgid "Erreur récupération alertes page "
+msgstr ""
+
+#: src\CronSyncAlert.php
+msgid "Aucune alerte trouvée sur cette page"
+msgstr ""
+
+#: src\CronSyncAlert.php
+msgid "%d alertes reçues sur la page %d"
+msgstr ""
+
+#: src\CronSyncAlert.php
+msgid "Limite de %d alertes atteinte, arrêt du traitement"
+msgstr ""
+
+#: src\CronSyncAlert.php
+msgid "Erreur traitement alerte ID %s: %s"
+msgstr ""
+
+#: src\CronSyncAlert.php
+msgid "Exception alerte ID %s: %s"
+msgstr ""
+
+#: src\CronSyncAlert.php
+msgid "Page %d terminée - %d alertes traitées, %d tickets créés, %d erreurs"
+msgstr ""
+
+#: src\CronSyncAlert.php
+msgid "Utilisation mémoire élevée (%.1f%%), arrêt préventif après %d alertes"
+msgstr ""
+
+#: src\CronSyncAlert.php
+msgid "Synchronisation terminée - %d alertes traitées, %d tickets créés, %d erreurs en %s secondes"
+msgstr ""
+
+#: src\CronSyncAlert.php
+msgid "Erreur critique alertes: "
+msgstr ""
+
+#: src\CronSyncAlert.php
+msgid "[WATCHMAN] %s - %s"
+msgstr ""
+
+#: src\CronSyncAlert.php
+msgid "Échec de la création du ticket"
+msgstr ""
+
+#: src\CronSyncAlert.php
+msgid "%d entrées supprimées de %s"
+msgstr ""
+
+#: src\CronSyncAlert.php
+msgid "Nettoyage terminé - %d entrées supprimées au total"
+msgstr ""
+
+#: src\CronSyncAlert.php
+msgid "Erreur nettoyage: "
+msgstr ""
+
+#: src\CronSyncAlert.php
+#: src\CronSyncComputer.php
+msgid "Plugin non configuré ou API indisponible"
+msgstr ""
+
+#: src\CronSyncAlert.php
+msgid "%d alertes traitées, %d tickets créés, %d erreurs"
+msgstr ""
+
+#: src\CronSyncAlert.php
+msgid "Début du monitoring des tâches cron"
+msgstr ""
+
+#: src\CronSyncAlert.php
+msgid "Monitoring des tâches terminé avec succès"
+msgstr ""
+
+#: src\CronSyncAlert.php
+msgid "Erreur dans le monitoring: "
+msgstr ""
+
+#: src\CronSyncAlert.php
+msgid "Gestionnaire CRON Alert"
+msgstr ""
+
+#: src\CronSyncComputer.php
+msgid "Synchronisation des ordinateurs et applications vers API"
+msgstr ""
+
+#: src\CronSyncComputer.php
+msgid "Début de synchronisation machines+apps - lot de %d éléments"
+msgstr ""
+
+#: src\CronSyncComputer.php
+#: src\CronSyncComputer.php
+msgid "Aucun ordinateur à synchroniser"
+msgstr ""
+
+#: src\CronSyncComputer.php
+msgid "%d ordinateurs trouvés pour synchronisation"
+msgstr ""
+
+#: src\CronSyncComputer.php
+msgid "Aucune donnée valide à synchroniser"
+msgstr ""
+
+#: src\CronSyncComputer.php
+msgid "%d ordinateurs synchronisés avec succès"
+msgstr ""
+
+#: src\CronSyncComputer.php
+msgid "Erreur lors de la synchronisation: "
+msgstr ""
+
+#: src\CronSyncComputer.php
+#: src\WatchmanApiClient.php
+msgid "Exception lors de la synchronisation: "
+msgstr ""
+
+#: src\CronSyncComputer.php
+msgid "Synchronisation terminée - %d traités, %d erreurs en %s secondes"
+msgstr ""
+
+#: src\CronSyncComputer.php
+msgid "Erreur critique: "
+msgstr ""
+
+#: src\CronSyncComputer.php
+msgid "%d ordinateurs traités, %d erreurs"
+msgstr ""
+
+#: src\CronSyncComputer.php
+msgid "Gestionnaire CRON Computer"
+msgstr ""
+
+#: src\WatchmanApiClient.php
+msgid "Configuration API manquante"
+msgstr ""
+
+#: src\WatchmanApiClient.php
+#: src\WatchmanApiClient.php
+msgid "Circuit breaker ouvert - API indisponible"
+msgstr ""
+
+#: src\WatchmanApiClient.php
+#: src\WatchmanApiClient.php
+#: src\WatchmanApiClient.php
+msgid "Configuration agent manquante pour les alertes"
+msgstr ""
+
+#: src\WatchmanApiClient.php
+msgid "Aucun asset à synchroniser"
+msgstr ""
+
+#: src\WatchmanApiClient.php
+msgid "Impossible de créer le dossier pour les fichiers JSON"
+msgstr ""
+
+#: src\WatchmanConfig.php
+msgid "Configuration sauvegardée"
+msgstr ""
+
+#: src\WatchmanManager.php
+msgid "Watchman"
+msgstr ""
+
+#: src\WatchmanManager.php
+msgid "Gestion des profils"
+msgstr ""
+
+#: src\WatchmanProfile.php
+msgid "Voir les alertes Watchman"
+msgstr ""
+
+#: src\WatchmanProfile.php
+msgid "Permet de voir les alertes et ordinateurs synchronisés"
+msgstr ""
+
+#: src\WatchmanProfile.php
+msgid "Gérer les alertes Watchman"
+msgstr ""
+
+#: src\WatchmanProfile.php
+msgid "Permet de marquer les alertes comme corrigées, créer des tickets"
+msgstr ""
+
+#: src\WatchmanProfile.php
+msgid "Administration Watchman"
+msgstr ""
+
+#: src\WatchmanProfile.php
+msgid "Configuration Watchman"
+msgstr ""
+
+#: src\WatchmanProfile.php
+msgid "Tâches CRON Watchman"
+msgstr ""
+
+#: src\WatchmanProfile.php
+msgid "Permet de lancer et surveiller les tâches de synchronisation"
+msgstr ""
+
+#: src\WatchmanProfile.php
+msgid "Droits Watchman pour le profil %s"
+msgstr ""
+
+#: templates\alerts.html.twig
+msgid "Alertes de sécurité"
+msgstr ""
+
+#: templates\alerts.html.twig
+#: templates\alert_detail.html.twig
+#: templates\computer_mappings.html.twig
+#: templates\pages\alerts.html.twig
+#: templates\pages\computer_detail.html.twig
+#: templates\pages\computer_mappings.html.twig
+msgid "Actualiser"
+msgstr ""
+
+#: templates\alerts.html.twig
+#: templates\computer_mappings.html.twig
+#: templates\pages\alerts.html.twig
+#: templates\pages\computer_mappings.html.twig
+msgid "Synchroniser"
+msgstr ""
+
+#: templates\alerts.html.twig
+msgid "Toutes les sévérités"
+msgstr ""
+
+#: templates\alerts.html.twig
+#: templates\computer_mappings.html.twig
+msgid "Tous les statuts"
+msgstr ""
+
+#: templates\alerts.html.twig
+#: templates\alerts.html.twig
+#: templates\pages\alerts.html.twig
+msgid "Non corrigées"
+msgstr ""
+
+#: templates\alerts.html.twig
+#: templates\pages\alerts.html.twig
+#: templates\pages\alerts.html.twig
+msgid "Corrigées"
+msgstr ""
+
+#: templates\alerts.html.twig
+msgid "Rechercher..."
+msgstr ""
+
+#: templates\alerts.html.twig
+#: templates\dashboard.html.twig
+#: templates\pages\alerts.html.twig
+msgid "CVE"
+msgstr ""
+
+#: templates\alerts.html.twig
+#: templates\alert_detail.html.twig
+#: templates\dashboard.html.twig
+#: templates\pages\alerts.html.twig
+#: templates\pages\alert_detail.html.twig
+msgid "Score"
+msgstr ""
+
+#: templates\alerts.html.twig
+#: templates\alerts.html.twig
+#: templates\alert_detail.html.twig
+#: templates\dashboard.html.twig
+#: templates\pages\alerts.html.twig
+#: templates\pages\computer_detail.html.twig
+msgid "Statut"
+msgstr ""
+
+#: templates\alerts.html.twig
+#: templates\dashboard.html.twig
+#: templates\pages\alerts.html.twig
+#: templates\pages\alert_detail.html.twig
+msgid "Ticket"
+msgstr ""
+
+#: templates\alerts.html.twig
+#: templates\alert_detail.html.twig
+#: templates\dashboard.html.twig
+#: templates\pages\alerts.html.twig
+msgid "Date"
+msgstr ""
+
+#: templates\alerts.html.twig
+#: templates\alert_detail.html.twig
+#: templates\computer_mappings.html.twig
+#: templates\dashboard.html.twig
+#: templates\pages\alerts.html.twig
+#: templates\pages\computer_mappings.html.twig
+msgid "Actions"
+msgstr ""
+
+#: templates\alerts.html.twig
+#: templates\alerts.html.twig
+#: templates\alerts.html.twig
+msgid "Possible faux positif"
+msgstr ""
+
+#: templates\alerts.html.twig
+#: templates\alerts.html.twig
+msgid "Intégration notifiée"
+msgstr ""
+
+#: templates\alerts.html.twig
+#: templates\alerts.html.twig
+msgid "Email envoyé"
+msgstr ""
+
+#: templates\alerts.html.twig
+#: templates\alerts.html.twig
+#: templates\alert_detail.html.twig
+msgid "Signalée"
+msgstr ""
+
+#: templates\alerts.html.twig
+msgid "Créer"
+msgstr ""
+
+#: templates\alerts.html.twig
+#: templates\computer_mappings.html.twig
+msgid "Voir détails"
+msgstr ""
+
+#: templates\alerts.html.twig
+#: templates\alert_detail.html.twig
+#: templates\alert_detail.html.twig
+msgid "Marquer comme corrigée"
+msgstr ""
+
+#: templates\alerts.html.twig
+msgid "alerte(s) sélectionnée(s)"
+msgstr ""
+
+#: templates\alerts.html.twig
+msgid "Marquer comme corrigées"
+msgstr ""
+
+#: templates\alerts.html.twig
+msgid "Faux positifs"
+msgstr ""
+
+#: templates\alerts.html.twig
+msgid "Créer tickets"
+msgstr ""
+
+#: templates\alerts.html.twig
+msgid "Supprimer"
+msgstr ""
+
+#: templates\alerts.html.twig
+msgid "Aucune alerte active"
+msgstr ""
+
+#: templates\alerts.html.twig
+msgid "Toutes vos applications semblent être à jour !"
+msgstr ""
+
+#: templates\alerts.html.twig
+msgid "Vérifier maintenant"
+msgstr ""
+
+#: templates\alerts.html.twig
+#: templates\pages\computer_mappings.html.twig
+msgid "Erreur lors de la synchronisation"
+msgstr ""
+
+#: templates\alerts.html.twig
+#: templates\pages\alerts.html.twig
+#: templates\pages\alert_detail.html.twig
+msgid "Êtes-vous sûr de vouloir supprimer cette alerte ?"
+msgstr ""
+
+#: templates\alerts.html.twig
+#: templates\pages\alerts.html.twig
+#: templates\pages\alert_detail.html.twig
+msgid "Êtes-vous sûr de vouloir supprimer les alertes sélectionnées ?"
+msgstr ""
+
+#: templates\alerts.html.twig
+#: templates\alert_detail.html.twig
+#: templates\pages\alerts.html.twig
+#: templates\pages\alert_detail.html.twig
+msgid "Marquer cette alerte comme corrigée ?"
+msgstr ""
+
+#: templates\alerts.html.twig
+#: templates\pages\alerts.html.twig
+#: templates\pages\alert_detail.html.twig
+msgid "Marquer les alertes sélectionnées comme corrigées ?"
+msgstr ""
+
+#: templates\alerts.html.twig
+#: templates\computer_mappings.html.twig
+#: templates\pages\alerts.html.twig
+#: templates\pages\alert_detail.html.twig
+#: templates\pages\alert_detail.html.twig
+#: templates\pages\alert_detail.html.twig
+#: templates\pages\alert_detail.html.twig
+#: templates\pages\alert_detail.html.twig
+#: templates\pages\alert_detail.html.twig
+#: templates\pages\alert_detail.html.twig
+#: templates\pages\alert_detail.html.twig
+#: templates\pages\alert_detail.html.twig
+#: templates\pages\alert_detail.html.twig
+#: templates\pages\computer_detail.html.twig
+#: templates\pages\computer_mappings.html.twig
+msgid "Chargement..."
+msgstr ""
+
+#: templates\alerts.html.twig
+#: templates\computer_mappings.html.twig
+#: templates\computer_mappings.html.twig
+#: templates\computer_mappings.html.twig
+#: templates\pages\alerts.html.twig
+#: templates\pages\alert_detail.html.twig
+#: templates\pages\computer_detail.html.twig
+#: templates\pages\computer_mappings.html.twig
+msgid "Erreur"
+msgstr ""
+
+#: templates\alerts.html.twig
+#: templates\computer_mappings.html.twig
+#: templates\pages\alerts.html.twig
+#: templates\pages\alert_detail.html.twig
+#: templates\pages\computer_detail.html.twig
+#: templates\pages\computer_mappings.html.twig
+msgid "Succès"
+msgstr ""
+
+#: templates\alerts.html.twig
+msgid "Retirer faux positif"
+msgstr ""
+
+#: templates\alerts.html.twig
+msgid "Marquer faux positif"
+msgstr ""
+
+#: templates\alerts.html.twig
+msgid "Informations générales"
+msgstr ""
+
+#: templates\alerts.html.twig
+msgid "Date création"
+msgstr ""
+
+#: templates\alerts.html.twig
+msgid "État des notifications"
+msgstr ""
+
+#: templates\alerts.html.twig
+msgid "Aucune description disponible"
+msgstr ""
+
+#: templates\alerts.html.twig
+#: templates\computer_mappings.html.twig
+msgid "Fermer"
+msgstr ""
+
+#: templates\alerts.html.twig
+msgid "Actualiser les alertes ?"
+msgstr ""
+
+#: templates\alert_detail.html.twig
+msgid "Retour"
+msgstr ""
+
+#: templates\alert_detail.html.twig
+msgid "Faux positif ?"
+msgstr ""
+
+#: templates\alert_detail.html.twig
+msgid "le"
+msgstr ""
+
+#: templates\alert_detail.html.twig
+msgid "Créer ticket"
+msgstr ""
+
+#: templates\alert_detail.html.twig
+#: templates\pages\alert_detail.html.twig
+msgid "Voir ticket"
+msgstr ""
+
+#: templates\alert_detail.html.twig
+msgid "Non spécifiée"
+msgstr ""
+
+#: templates\alert_detail.html.twig
+msgid "Base de données"
+msgstr ""
+
+#: templates\alert_detail.html.twig
+msgid "Serveur web"
+msgstr ""
+
+#: templates\alert_detail.html.twig
+msgid "Bibliothèque"
+msgstr ""
+
+#: templates\alert_detail.html.twig
+msgid "Informations de sécurité"
+msgstr ""
+
+#: templates\alert_detail.html.twig
+msgid "Exploitabilité"
+msgstr ""
+
+#: templates\alert_detail.html.twig
+msgid "Impact"
+msgstr ""
+
+#: templates\alert_detail.html.twig
+msgid "Détails de la CVE"
+msgstr ""
+
+#: templates\alert_detail.html.twig
+msgid "ID"
+msgstr ""
+
+#: templates\alert_detail.html.twig
+msgid "Assigné par"
+msgstr ""
+
+#: templates\alert_detail.html.twig
+msgid "Publié le"
+msgstr ""
+
+#: templates\alert_detail.html.twig
+msgid "il y a"
+msgstr ""
+
+#: templates\alert_detail.html.twig
+msgid "jours"
+msgstr ""
+
+#: templates\alert_detail.html.twig
+msgid "Modifié le"
+msgstr ""
+
+#: templates\alert_detail.html.twig
+#: templates\pages\alert_detail.html.twig
+msgid "Références"
+msgstr ""
+
+#: templates\alert_detail.html.twig
+msgid "Produits affectés"
+msgstr ""
+
+#: templates\alert_detail.html.twig
+#: templates\pages\alert_detail.html.twig
+msgid "Fournisseur"
+msgstr ""
+
+#: templates\alert_detail.html.twig
+msgid "Produit"
+msgstr ""
+
+#: templates\alert_detail.html.twig
+msgid "Plage vulnérable"
+msgstr ""
+
+#: templates\alert_detail.html.twig
+msgid "Autres alertes liées à cette CVE"
+msgstr ""
+
+#: templates\alert_detail.html.twig
+msgid "Voir"
+msgstr ""
+
+#: templates\alert_detail.html.twig
+#: templates\computer_mappings.html.twig
+msgid "Informations"
+msgstr ""
+
+#: templates\alert_detail.html.twig
+msgid "Créée le"
+msgstr ""
+
+#: templates\alert_detail.html.twig
+msgid "Modifiée le"
+msgstr ""
+
+#: templates\alert_detail.html.twig
+msgid "Corrigée le"
+msgstr ""
+
+#: templates\alert_detail.html.twig
+msgid "Notifications"
+msgstr ""
+
+#: templates\alert_detail.html.twig
+msgid "Intégration"
+msgstr ""
+
+#: templates\alert_detail.html.twig
+msgid "Envoyée"
+msgstr ""
+
+#: templates\alert_detail.html.twig
+msgid "Non envoyée"
+msgstr ""
+
+#: templates\alert_detail.html.twig
+msgid "Email"
+msgstr ""
+
+#: templates\alert_detail.html.twig
+msgid "Envoyé"
+msgstr ""
+
+#: templates\alert_detail.html.twig
+msgid "Non envoyé"
+msgstr ""
+
+#: templates\alert_detail.html.twig
+#: templates\config.form.html.twig
+msgid "Oui"
+msgstr ""
+
+#: templates\alert_detail.html.twig
+#: templates\config.form.html.twig
+msgid "Non"
+msgstr ""
+
+#: templates\alert_detail.html.twig
+msgid "Historique"
+msgstr ""
+
+#: templates\alert_detail.html.twig
+msgid "Actions rapides"
+msgstr ""
+
+#: templates\alert_detail.html.twig
+msgid "Créer un ticket"
+msgstr ""
+
+#: templates\alert_detail.html.twig
+msgid "Créer un ticket GLPI à partir de cette alerte ?"
+msgstr ""
+
+#: templates\alert_detail.html.twig
+msgid "Marquer cette alerte comme faux positif ?"
+msgstr ""
+
+#: templates\alert_detail.html.twig
+msgid "Retirer le marquage faux positif ?"
+msgstr ""
+
+#: templates\alert_detail.html.twig
+msgid "Êtes-vous sûr de vouloir supprimer cette alerte ? Cette action est irréversible."
+msgstr ""
+
+#: templates\alert_detail.html.twig
+msgid "Action effectuée avec succès"
+msgstr ""
+
+#: templates\alert_detail.html.twig
+msgid "Erreur de communication avec le serveur"
+msgstr ""
+
+#: templates\components\config.form.html.twig
+#: templates\config.form.html.twig
+#: templates\config.form.html.twig
+msgid "Clé publique"
+msgstr ""
+
+#: templates\components\config.form.html.twig
+#: templates\config.form.html.twig
+msgid "Clé secrète"
+msgstr ""
+
+#: templates\components\config.form.html.twig
+#: templates\components\config.form.html.twig
+#: templates\config.form.html.twig
+msgid "Information"
+msgstr ""
+
+#: templates\components\config.form.html.twig
+msgid "Vous pouvez obtenir les clés sur le site Watchman.bj"
+msgstr ""
+
+#: templates\components\config.form.html.twig
+#: templates\config.form.html.twig
+msgid "Configuration des tâches cron"
+msgstr ""
+
+#: templates\components\config.form.html.twig
+#: templates\config.form.html.twig
+msgid "Activer les tâches cron"
+msgstr ""
+
+#: templates\components\config.form.html.twig
+#: templates\config.form.html.twig
+msgid "Activé"
+msgstr ""
+
+#: templates\components\config.form.html.twig
+#: templates\config.form.html.twig
+msgid "Désactivé"
+msgstr ""
+
+#: templates\components\config.form.html.twig
+#: templates\config.form.html.twig
+msgid "1 minute"
+msgstr ""
+
+#: templates\components\config.form.html.twig
+#: templates\config.form.html.twig
+msgid "5 minutes"
+msgstr ""
+
+#: templates\components\config.form.html.twig
+#: templates\config.form.html.twig
+msgid "15 minutes"
+msgstr ""
+
+#: templates\components\config.form.html.twig
+#: templates\config.form.html.twig
+msgid "30 minutes"
+msgstr ""
+
+#: templates\components\config.form.html.twig
+#: templates\config.form.html.twig
+msgid "1 heure"
+msgstr ""
+
+#: templates\components\config.form.html.twig
+#: templates\config.form.html.twig
+msgid "2 heures"
+msgstr ""
+
+#: templates\components\config.form.html.twig
+#: templates\config.form.html.twig
+msgid "6 heures"
+msgstr ""
+
+#: templates\components\config.form.html.twig
+#: templates\config.form.html.twig
+msgid "12 heures"
+msgstr ""
+
+#: templates\components\config.form.html.twig
+#: templates\config.form.html.twig
+msgid "24 heures"
+msgstr ""
+
+#: templates\components\config.form.html.twig
+#: templates\config.form.html.twig
+msgid "Détermine la fréquence à laquelle les tâches cron seront exécutées"
+msgstr ""
+
+#: templates\components\config.form.html.twig
+#: templates\config.form.html.twig
+msgid "Statut actuel"
+msgstr ""
+
+#: templates\components\config.form.html.twig
+#: templates\config.form.html.twig
+msgid "Arrêté"
+msgstr ""
+
+#: templates\components\config.form.html.twig
+#: templates\config.form.html.twig
+msgid "Dernière exécution"
+msgstr ""
+
+#: templates\components\config.form.html.twig
+#: templates\config.form.html.twig
+msgid "Jamais exécuté"
+msgstr ""
+
+#: templates\components\config.form.html.twig
+#: templates\config.form.html.twig
+msgid "Sauvegarder"
+msgstr ""
+
+#: templates\computer_mappings.html.twig
+#: templates\computer_mappings.html.twig
+#: templates\pages\computer_mappings.html.twig
+msgid "Synchronisés"
+msgstr ""
+
+#: templates\computer_mappings.html.twig
+#: templates\computer_mappings.html.twig
+msgid "Avec alertes"
+msgstr ""
+
+#: templates\computer_mappings.html.twig
+msgid "Sans alertes"
+msgstr ""
+
+#: templates\computer_mappings.html.twig
+msgid "Rechercher nom, IP..."
+msgstr ""
+
+#: templates\computer_mappings.html.twig
+#: templates\pages\computer_mappings.html.twig
+msgid "Erreurs"
+msgstr ""
+
+#: templates\computer_mappings.html.twig
+msgid "Adresse IP"
+msgstr ""
+
+#: templates\computer_mappings.html.twig
+msgid "ID Externe"
+msgstr ""
+
+#: templates\computer_mappings.html.twig
+msgid "Statut sync"
+msgstr ""
+
+#: templates\computer_mappings.html.twig
+msgid "Dernière sync"
+msgstr ""
+
+#: templates\computer_mappings.html.twig
+#: templates\pages\computer_mappings.html.twig
+msgid "Lien GLPI"
+msgstr ""
+
+#: templates\computer_mappings.html.twig
+#: templates\computer_mappings.html.twig
+#: templates\computer_mappings.html.twig
+msgid "Synchronisé"
+msgstr ""
+
+#: templates\computer_mappings.html.twig
+msgid "Aucune"
+msgstr ""
+
+#: templates\computer_mappings.html.twig
+msgid "Jamais"
+msgstr ""
+
+#: templates\computer_mappings.html.twig
+msgid "GLPI"
+msgstr ""
+
+#: templates\computer_mappings.html.twig
+msgid "Non lié"
+msgstr ""
+
+#: templates\computer_mappings.html.twig
+#: templates\computer_mappings.html.twig
+msgid "Re-synchroniser"
+msgstr ""
+
+#: templates\computer_mappings.html.twig
+msgid "ordinateur(s) sélectionné(s)"
+msgstr ""
+
+#: templates\computer_mappings.html.twig
+msgid "Vérifier alertes"
+msgstr ""
+
+#: templates\computer_mappings.html.twig
+msgid "Retirer mapping"
+msgstr ""
+
+#: templates\computer_mappings.html.twig
+#: templates\pages\computer_mappings.html.twig
+msgid "Aucun ordinateur synchronisé"
+msgstr ""
+
+#: templates\computer_mappings.html.twig
+#: templates\pages\computer_mappings.html.twig
+msgid "Lancez une synchronisation pour découvrir les ordinateurs de votre réseau."
+msgstr ""
+
+#: templates\computer_mappings.html.twig
+msgid "Démarrer la synchronisation"
+msgstr ""
+
+#: templates\computer_mappings.html.twig
+#: templates\pages\computer_mappings.html.twig
+msgid "Êtes-vous sûr de vouloir retirer ce mapping ?"
+msgstr ""
+
+#: templates\computer_mappings.html.twig
+#: templates\pages\computer_mappings.html.twig
+msgid "Êtes-vous sûr de vouloir retirer les mappings sélectionnés ?"
+msgstr ""
+
+#: templates\computer_mappings.html.twig
+#: templates\pages\computer_mappings.html.twig
+msgid "Lancer la synchronisation de cet ordinateur ?"
+msgstr ""
+
+#: templates\computer_mappings.html.twig
+#: templates\pages\computer_mappings.html.twig
+msgid "Lancer la synchronisation des ordinateurs sélectionnés ?"
+msgstr ""
+
+#: templates\computer_mappings.html.twig
+#: templates\computer_mappings.html.twig
+msgid "Erreur de synchronisation"
+msgstr ""
+
+#: templates\computer_mappings.html.twig
+msgid "Nombre de tentatives"
+msgstr ""
+
+#: templates\computer_mappings.html.twig
+msgid "Dernière tentative"
+msgstr ""
+
+#: templates\computer_mappings.html.twig
+msgid "Aucun ordinateur sélectionné"
+msgstr ""
+
+#: templates\computer_mappings.html.twig
+msgid "Actualiser la liste des ordinateurs ?"
+msgstr ""
+
+#: templates\config.form.html.twig
+msgid "Configuration générale"
+msgstr ""
+
+#: templates\config.form.html.twig
+msgid "Plugin actif"
+msgstr ""
+
+#: templates\config.form.html.twig
+msgid "Timeout API (secondes)"
+msgstr ""
+
+#: templates\config.form.html.twig
+msgid "Aide"
+msgstr ""
+
+#: templates\config.form.html.twig
+msgid "Clé Secrète"
+msgstr ""
+
+#: templates\config.form.html.twig
+msgid "Obtenez vos clés  depuis votre compte Watchman .Obtenez vos clés  depuis votre compte Watchman . Cette clé sera chiffrée et stockée de manière sécurisée."
+msgstr ""
+
+#: templates\config.form.html.twig
+#: templates\config.form.html.twig
+msgid "Obtenir les clés"
+msgstr ""
+
+#: templates\config.form.html.twig
+msgid "Obtenez les clés automatiquement"
+msgstr ""
+
+#: templates\pages\alerts.html.twig
+msgid "Chargement des alertes..."
+msgstr ""
+
+#: templates\pages\alerts.html.twig
+#: templates\pages\computer_detail.html.twig
+msgid "Aucune alerte"
+msgstr ""
+
+#: templates\pages\alerts.html.twig
+#: templates\pages\alerts.html.twig
+#: templates\pages\computer_detail.html.twig
+msgid "Total"
+msgstr ""
+
+#: templates\pages\alerts.html.twig
+msgid "Cette semaine"
+msgstr ""
+
+#: templates\pages\alerts.html.twig
+msgid "Rechercher par nom ou CVE"
+msgstr ""
+
+#: templates\pages\alerts.html.twig
+msgid "Statut de correction"
+msgstr ""
+
+#: templates\pages\alerts.html.twig
+msgid "Filtrer par date"
+msgstr ""
+
+#: templates\pages\alert_detail.html.twig
+msgid "Retour aux alertes"
+msgstr ""
+
+#: templates\pages\alert_detail.html.twig
+msgid "Détails complets de la vulnérabilité détectée"
+msgstr ""
+
+#: templates\pages\alert_detail.html.twig
+msgid "Patch"
+msgstr ""
+
+#: templates\pages\alert_detail.html.twig
+msgid "Chargement de la description..."
+msgstr ""
+
+#: templates\pages\alert_detail.html.twig
+msgid "URL"
+msgstr ""
+
+#: templates\pages\alert_detail.html.twig
+msgid "Produits vulnérables"
+msgstr ""
+
+#: templates\pages\alert_detail.html.twig
+msgid "Nom du produit"
+msgstr ""
+
+#: templates\pages\alert_detail.html.twig
+msgid "Actif vulnérable"
+msgstr ""
+
+#: templates\pages\alert_detail.html.twig
+msgid "Publié"
+msgstr ""
+
+#: templates\pages\alert_detail.html.twig
+msgid "Modifié"
+msgstr ""
+
+#: templates\pages\alert_detail.html.twig
+msgid "CVE assigneur"
+msgstr ""
+
+#: templates\pages\alert_detail.html.twig
+#: templates\pages\alert_detail.html.twig
+#: templates\pages\alert_detail.html.twig
+#: templates\pages\alert_detail.html.twig
+#: templates\pages\alert_detail.html.twig
+#: templates\pages\alert_detail.html.twig
+#: templates\pages\alert_detail.html.twig
+#: templates\pages\alert_detail.html.twig
+msgid "N/A"
+msgstr ""
+
+#: templates\pages\alert_detail.html.twig
+msgid "Privilèges requis"
+msgstr ""
+
+#: templates\pages\alert_detail.html.twig
+msgid "Impact sur la confidentialité"
+msgstr ""
+
+#: templates\pages\alert_detail.html.twig
+msgid "Impact sur la disponibilité"
+msgstr ""
+
+#: templates\pages\alert_detail.html.twig
+msgid "Aucune donnée disponible"
+msgstr ""
+
+#: templates\pages\alert_detail.html.twig
+msgid "Statut de patch mis à jour avec succès"
+msgstr ""
+
+#: templates\pages\alert_detail.html.twig
+msgid "Erreur lors de la mise à jour du statut"
+msgstr ""
+
+#: templates\pages\computer_detail.html.twig
+msgid "Retour à la liste"
+msgstr ""
+
+#: templates\pages\computer_detail.html.twig
+msgid "Informations de base"
+msgstr ""
+
+#: templates\pages\computer_detail.html.twig
+msgid "Applications installées"
+msgstr ""
+
+#: templates\pages\computer_detail.html.twig
+msgid "Editeur"
+msgstr ""
+
+#: templates\pages\computer_detail.html.twig
+msgid "applications"
+msgstr ""
+
+#: templates\pages\computer_detail.html.twig
+msgid "Aucune application trouvée"
+msgstr ""
+
+#: templates\pages\computer_detail.html.twig
+msgid "Voir les alertes"
+msgstr ""
+
+#: templates\pages\computer_detail.html.twig
+msgid "Masquer les alertes"
+msgstr ""
+
+#: templates\pages\computer_mappings.html.twig
+msgid "Chargement des ordinateurs..."
+msgstr ""
+
+#: templates\pages\computer_mappings.html.twig
+msgid "Rechercher par ID externe..."
+msgstr ""
+
+#: templates\pages\computer_mappings.html.twig
+msgid "Statut de synchronisation"
+msgstr ""
+
+#: templates\pages\computer_mappings.html.twig
+msgid "Filtrer par date de sync"
+msgstr ""
+
+#: templates\pages\computer_mappings.html.twig
+msgid "Nom / ID"
+msgstr ""
+
+#: templates\pages\computer_mappings.html.twig
+msgid "Statut Sync"
+msgstr ""
+
+#: templates\pages\computer_mappings.html.twig
+msgid "Dernière Sync"
+msgstr ""
+
+#: templates\pages\computer_mappings.html.twig
+msgid "Aucun résultat trouvé"
+msgstr ""
+
+#: templates\pages\computer_mappings.html.twig
+msgid "Chargement des données..."
+msgstr ""
+
+#: templates\pages\computer_mappings.html.twig
+msgid "Synchronisation lancée avec succès"
+msgstr ""

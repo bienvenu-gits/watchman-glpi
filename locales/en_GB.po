@@ -1,0 +1,215 @@
+# GLPI Plugin Watchman - English Translation
+# Copyright (C) 2025 Global IT Service
+# This file is distributed under the same license as the Watchman package.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: GLPI Plugin Watchman\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-01-21 12:00+0000\n"
+"PO-Revision-Date: 2025-01-21 12:00+0000\n"
+"Last-Translator: Global IT Service\n"
+"Language-Team: English\n"
+"Language: en_GB\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+# Configuration
+msgid "Clé publique"
+msgstr "Public Key"
+
+msgid "Clé secrète"
+msgstr "Secret Key"
+
+msgid "Information"
+msgstr "Information"
+
+msgid "Vous pouvez obtenir les clés sur le site Watchman.bj"
+msgstr "You can get the keys on the Watchman.bj website"
+
+msgid "Sauvegarder"
+msgstr "Save"
+
+msgid "Configuration"
+msgstr "Configuration"
+
+# Profile Management
+msgid "Droits mis à jour avec succès"
+msgstr "Rights updated successfully"
+
+msgid "Gestion des profils Watchman"
+msgstr "Watchman Profile Management"
+
+msgid "Gestion des droits Watchman"
+msgstr "Watchman Rights Management"
+
+msgid "Sélectionner un profil"
+msgstr "Select a Profile"
+
+msgid "Profil"
+msgstr "Profile"
+
+msgid "Mettre à jour les droits"
+msgstr "Update Rights"
+
+msgid "Profils ayant accès à Watchman"
+msgstr "Profiles with Watchman Access"
+
+msgid "Voir alertes"
+msgstr "View Alerts"
+
+msgid "Gérer alertes"
+msgstr "Manage Alerts"
+
+msgid "Administration"
+msgstr "Administration"
+
+msgid "Tâches CRON"
+msgstr "CRON Tasks"
+
+msgid "Informations sur les droits"
+msgstr "Rights Information"
+
+msgid "Droit"
+msgstr "Right"
+
+msgid "Description"
+msgstr "Description"
+
+# Computer Mappings
+msgid "Ordinateurs synchronisés"
+msgstr "Synchronized Computers"
+
+msgid "Actualiser"
+msgstr "Refresh"
+
+# Alert Management
+msgid "Alertes"
+msgstr "Alerts"
+
+msgid "Nouvelle alerte"
+msgstr "New Alert"
+
+msgid "Statut"
+msgstr "Status"
+
+msgid "Priorité"
+msgstr "Priority"
+
+msgid "Date de création"
+msgstr "Creation Date"
+
+msgid "Actions"
+msgstr "Actions"
+
+# Status
+msgid "Ouvert"
+msgstr "Open"
+
+msgid "En cours"
+msgstr "In Progress"
+
+msgid "Fermé"
+msgstr "Closed"
+
+msgid "Résolu"
+msgstr "Resolved"
+
+# Priority
+msgid "Très haute"
+msgstr "Very High"
+
+msgid "Haute"
+msgstr "High"
+
+msgid "Moyenne"
+msgstr "Medium"
+
+msgid "Basse"
+msgstr "Low"
+
+msgid "Très basse"
+msgstr "Very Low"
+
+# Cron Configuration
+msgid "Configuration des tâches cron"
+msgstr "Cron Tasks Configuration"
+
+msgid "Activer les tâches cron"
+msgstr "Enable Cron Tasks"
+
+msgid "Activé"
+msgstr "Enabled"
+
+msgid "Désactivé"
+msgstr "Disabled"
+
+msgid "Active ou désactive l'exécution automatique des tâches en arrière-plan"
+msgstr "Enable or disable automatic execution of background tasks"
+
+msgid "Fréquence d'exécution (secondes)"
+msgstr "Execution Frequency (seconds)"
+
+msgid "1 minute"
+msgstr "1 minute"
+
+msgid "5 minutes"
+msgstr "5 minutes"
+
+msgid "15 minutes"
+msgstr "15 minutes"
+
+msgid "30 minutes"
+msgstr "30 minutes"
+
+msgid "1 heure"
+msgstr "1 hour"
+
+msgid "2 heures"
+msgstr "2 hours"
+
+msgid "6 heures"
+msgstr "6 hours"
+
+msgid "12 heures"
+msgstr "12 hours"
+
+msgid "24 heures"
+msgstr "24 hours"
+
+msgid "Détermine la fréquence à laquelle les tâches cron seront exécutées"
+msgstr "Determines the frequency at which cron tasks will be executed"
+
+msgid "Statut actuel"
+msgstr "Current Status"
+
+msgid "En cours d'exécution"
+msgstr "Running"
+
+msgid "Arrêté"
+msgstr "Stopped"
+
+msgid "Inconnu"
+msgstr "Unknown"
+
+msgid "Dernière exécution"
+msgstr "Last Execution"
+
+msgid "Jamais exécuté"
+msgstr "Never Executed"
+
+msgid "Les tâches cron permettent d'exécuter automatiquement des actions en arrière-plan selon la fréquence définie. Assurez-vous que le plugin est actif pour que les tâches cron fonctionnent."
+msgstr "Cron tasks allow automatic execution of background actions according to the defined frequency. Make sure the plugin is active for cron tasks to work."
+
+# Setup messages
+msgid "Installed / not configured"
+msgstr "Installed / not configured"
+
+# General
+msgid "My example plugin"
+msgstr "My example plugin"
+
+msgid "Watchman"
+msgstr "Watchman"

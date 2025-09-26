@@ -36,10 +36,13 @@ class WatchmanConfig extends CommonDBTM
         global $CFG_GLPI;
         // $this->initForm($ID, $options);
         $config = $this->getConfig();
+        $redirect_url = $CFG_GLPI['url_base'] . "/plugins/watchman/front/watchmanconfig.form.php?_glpi_csrf_token=" . Session::getNewCSRFToken();
         $params = [
             'config' => $config,
             'form_action' => $CFG_GLPI['root_doc'] . "/plugins/watchman/front/watchmanconfig.form.php",
             'csrf_token' => Session::getNewCSRFToken(),
+            'current_page' => 'watchmanconfig',
+            'redirect_url' => urlencode($redirect_url),
             'base_url' => $CFG_GLPI["root_doc"],
         ];
         TemplateRenderer::getInstance()->display('@watchman/pages/config.html.twig', $params);

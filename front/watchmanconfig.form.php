@@ -19,6 +19,15 @@ if (isset($_POST["update"])) {
     isset($_GET['id'])
         ? $ID = intval($_GET['id'])
         : $ID = 0;
+    
+    if(isset($_GET['client_id']) && isset($_GET['client_secret']) && Session::validateCSRF($_GET)) {
+        $inputs=[
+            'public_key'     => $_GET['client_id'],
+            'secret_key' => $_GET['client_secret']
+        ];
+        $config->saveConfig($inputs);
+    }
+
 
     // display form
     Html::header(

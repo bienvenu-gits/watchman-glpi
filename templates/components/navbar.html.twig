@@ -9,13 +9,13 @@
 		<div class="order-2 hidden w-full items-center justify-between md:order-1 md:ml-5 md:flex md:w-auto" id="mobile-menu-2">
 			<ul class="font-body mt-4 flex flex-col font-medium md:mt-0 md:flex-row md:text-sm md:font-medium space-x-0 md:space-x-4 lg:space-x-6 xl:space-x-8 navbar">
 
-				<li class="cms_watchman_nav-link">
+				<li class="cms_watchman_nav-link{% if current_page == 'computermapping' %} active{% endif %}">
 					<a href="{{ base_url }}/plugins/watchman/front/computermapping.php" class="flex w-full items-center border-b border-gray-800 py-2 px-3 font-medium md:border-0 md:p-0">
 						<i class="mdi mdi-buffer mr-1 text-lg"></i>
 						Ressources
 					</a>
 				</li>
-				<li class="cms_watchman_nav-link">
+				<li class="cms_watchman_nav-link{% if current_page == 'alertmanager' %} active{% endif %}">
 					<a href="{{ base_url }}/plugins/watchman/front/alertmanager.php" class="flex w-full items-center border-b border-gray-800 py-2 px-3 font-medium md:border-0 md:p-0">
 						<i class="fas fa-info-circle mr-1 text-lg"></i>
 						Alertes
@@ -25,11 +25,13 @@
 		</div>
 		<div class="order-1 ml-auto flex items-center md:order-2">
 			<div class="mr-2 lg:mr-0 dropdown relative">
-				<div class="cms_watchman_nav-link">
+				<div class="cms_watchman_nav-link{% if current_page == 'watchmanconfig' %} active{% endif %}">
 					<a href="{{ base_url }}/plugins/watchman/front/watchmanconfig.form.php" class="flex w-full items-center border-b border-gray-800 py-2 px-3 font-medium md:border-0 md:p-0">
 						<i class="fas fa-cog mr-1 text-lg"></i>
 						Paramètres
 					</a>
 				</div>
 			</div>
-		</nav>
+		</div>
+	</div>
+</nav>

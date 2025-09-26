@@ -19,7 +19,8 @@ Html::header(
     WatchmanManager::class,
     "watchmanmanager"
 );
-$config_start=WatchmanConfig::getConfigValue('show_welcome', null);
+$config_start=null;
+// $config_start=WatchmanConfig::getConfigValue('show_welcome', null);
 
 if ($config_start==null && isset($_GET['start']) && Session::validateCSRF(['_glpi_csrf_token'=>$_GET['start']])) {
     WatchmanConfig::saveConfig(['show_welcome'=> 1]);
