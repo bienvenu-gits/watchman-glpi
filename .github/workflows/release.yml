@@ -8,6 +8,8 @@ on:
 jobs:
   create-release:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write  # Nécessaire pour créer des releases et uploader des assets
 
     steps:
       - name: Checkout code
