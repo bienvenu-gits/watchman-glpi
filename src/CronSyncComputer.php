@@ -686,7 +686,7 @@ class CronSyncComputer extends CronManager
                 $processed = count($assets_cleaned['assets']);
                 // Mettre à jour le statut de tous les ordinateurs
                 foreach ($assets_cleaned['assets'] as $asset_cleaned) {
-                    var_dump($asset_cleaned);
+                    // var_dump($asset_cleaned);
                     self::updateComputerSyncStatus($asset_cleaned['computer_glpi_id'],'success');
                 }
             } else {

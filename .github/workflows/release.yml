@@ -1,0 +1,106 @@
+name: Create Release
+
+on:
+  push:
+    tags:
+      - 'v*'  # Déclenché sur les tags qui commencent par 'v' (ex: v1.0.0, v0.0.1)
+
+jobs:
+  create-release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '7.4'
+
+      - name: Install dependencies
+        run: composer install --no-dev --optimize-autoloader
+
+      - name: Get plugin name and version
+        id: plugin_info
+        run: |
+          PLUGIN_NAME="watchman"
+          VERSION=${GITHUB_REF#refs/tags/v}
+          echo "plugin_name=$PLUGIN_NAME" >> $GITHUB_OUTPUT
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "release_name=glpi-${PLUGIN_NAME}-${VERSION}" >> $GITHUB_OUTPUT
+
+      - name: Prepare release directory
+        run: |
+          mkdir -p release/${{ steps.plugin_info.outputs.plugin_name }}
+
+          # Copier tous les fichiers nécessaires
+          rsync -av \
+            --exclude='.git*' \
+            --exclude='.github' \
+            --exclude='node_modules' \
+            --exclude='vendor' \
+            --exclude='dist' \
+            --exclude='.gh_token' \
+            --exclude='composer.lock' \
+            --exclude='*.min.*' \
+            --exclude='.claude' \
+            --exclude='CLAUDE.md' \
+            ./ release/${{ steps.plugin_info.outputs.plugin_name }}/
+
+          # Copier le vendor pour la production (sans dev)
+          cp -r vendor release/${{ steps.plugin_info.outputs.plugin_name }}/vendor
+
+      - name: Create ZIP archive
+        run: |
+          cd release
+          zip -r ../${{ steps.plugin_info.outputs.release_name }}.zip ${{ steps.plugin_info.outputs.plugin_name }}
+          cd ..
+
+      - name: Generate changelog
+        id: changelog
+        run: |
+          # Récupérer les commits depuis le dernier tag
+          PREVIOUS_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
+          if [ -n "$PREVIOUS_TAG" ]; then
+            CHANGELOG=$(git log ${PREVIOUS_TAG}..HEAD --pretty=format:"- %s (%h)" --no-merges)
+          else
+            CHANGELOG=$(git log --pretty=format:"- %s (%h)" --no-merges)
+          fi
+
+          # Échapper les caractères spéciaux pour GitHub
+          CHANGELOG="${CHANGELOG//'%'/'%25'}"
+          CHANGELOG="${CHANGELOG//$'\n'/'%0A'}"
+          CHANGELOG="${CHANGELOG//$'\r'/'%0D'}"
+
+          echo "changelog=$CHANGELOG" >> $GITHUB_OUTPUT
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          name: Release ${{ steps.plugin_info.outputs.version }}
+          body: |
+            ## Watchman Plugin for GLPI v${{ steps.plugin_info.outputs.version }}
+
+            ### Installation
+            1. Téléchargez le fichier ZIP ci-dessous
+            2. Extrayez le contenu dans le dossier `plugins/` de votre installation GLPI
+            3. Connectez-vous à GLPI en tant qu'administrateur
+            4. Allez dans **Configuration > Plugins**
+            5. Installez et activez le plugin Watchman
+
+            ### Compatibilité
+            - GLPI >= 10.0.0
+            - PHP >= 7.4
+
+            ### Changelog
+            ${{ steps.changelog.outputs.changelog }}
+
+            ---
+            **Note:** Ce fichier ZIP contient toutes les dépendances nécessaires pour une installation en production.
+          files: |
+            ${{ steps.plugin_info.outputs.release_name }}.zip
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -18,6 +18,7 @@ Html::header(
     "computermapping"
 );
 
+
 $computer_id = $_GET['computer_id'] ?? null;
 $dashboard_manager->showComputerMappings($computer_id);
 
