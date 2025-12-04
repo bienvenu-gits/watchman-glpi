@@ -75,13 +75,16 @@ function plugin_version_watchman()
     return [
         'name'           => 'Watchman',
         'version'        => PLUGIN_WATCHMAN_VERSION,
-        'author'         => '<a href="http://www.gits.bj">Global It Service</a>',
-        'license'        => '',
-        'homepage'       => '',
+        'author'         => '<a href="http://www.gits.bj">Global IT Service</a>',
+        'license'        => 'MIT',
+        'homepage'       => 'https://github.com/bienvenu-gits/watchman-glpi',
         'requirements'   => [
             'glpi' => [
                 'min' => PLUGIN_WATCHMAN_MIN_GLPI_VERSION,
                 'max' => PLUGIN_WATCHMAN_MAX_GLPI_VERSION,
+            ],
+            'php' => [
+                'min' => '7.4',
             ]
         ]
     ];

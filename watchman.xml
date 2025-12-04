@@ -1,37 +1,63 @@
 <root>
-   <name>watchman</name>
+   <name>Watchman</name>
    <key>watchman</key>
-   <!-- stable, beta, development, alpha, ... -->
    <state>stable</state>
-   <logo>https://raw.githubusercontent.com/pluginsGLPI/watchman/master/{LNAME}.png</logo>
+   <logo>https://raw.githubusercontent.com/bienvenu-gits/watchman-glpi/main/assets/images/cms_watchman/watchman_icon.png</logo>
    <description>
       <short>
-         <!-- Add as many lang tag you want -->
-         <en>watchman GLPI plugin.</en>
-         <fr>Plugin GLPI watchman</fr>
+         <en>CVE monitoring and vulnerability management for GLPI assets</en>
+         <fr>Surveillance des CVE et gestion des vulnérabilités pour les actifs GLPI</fr>
       </short>
       <long>
-         <!-- Add as many lang tag you want -->
-         <en>A long description for watchman GLPI plugin.</en>
-         <fr>Une description longue pour le plugin GLPI watchman</fr>
+         <en>**Watchman** is a comprehensive security plugin that integrates CVE (Common Vulnerabilities and Exposures) monitoring into GLPI. It provides automated vulnerability detection, tracking, and management capabilities for your IT assets.
+
+## Key Features
+
+- **Automated CVE Monitoring**: Continuous synchronization with external vulnerability databases
+- **Alert Management**: Create and manage security alerts with customizable severity levels
+- **Ticket Integration**: Automatic ticket creation for detected vulnerabilities
+- **Patch Tracking**: Monitor remediation status and patch deployment
+- **Computer Integration**: Enhanced Computer objects with real-time security data
+- **Dashboard & Reporting**: Comprehensive views of your security posture
+- **API Integration**: Connect to external vulnerability intelligence sources
+
+## Use Cases
+
+- Security teams monitoring infrastructure vulnerabilities
+- IT departments managing patch deployment
+- Compliance teams tracking security remediation
+- Asset managers maintaining security inventory</en>
+         <fr>**Watchman** est un plugin de sécurité complet qui intègre la surveillance des CVE (Common Vulnerabilities and Exposures) dans GLPI. Il fournit des capacités automatisées de détection, de suivi et de gestion des vulnérabilités pour vos actifs informatiques.
+
+## Fonctionnalités principales
+
+- **Surveillance automatisée des CVE**: Synchronisation continue avec les bases de données de vulnérabilités externes
+- **Gestion des alertes**: Créer et gérer des alertes de sécurité avec des niveaux de gravité personnalisables
+- **Intégration des tickets**: Création automatique de tickets pour les vulnérabilités détectées
+- **Suivi des correctifs**: Surveiller l'état de remédiation et le déploiement des patches
+- **Intégration des ordinateurs**: Objets Computer enrichis avec des données de sécurité en temps réel
+- **Tableau de bord et reporting**: Vues complètes de votre posture de sécurité
+- **Intégration API**: Connexion aux sources externes de renseignements sur les vulnérabilités
+
+## Cas d'usage
+
+- Équipes de sécurité surveillant les vulnérabilités de l'infrastructure
+- Départements IT gérant le déploiement des correctifs
+- Équipes de conformité suivant la remédiation de sécurité
+- Gestionnaires d'actifs maintenant l'inventaire de sécurité</fr>
       </long>
    </description>
-   <homepage>https://github.com/pluginsGLPI/watchman</homepage>
-   <download>https://github.com/pluginsGLPI/watchman/releases</download>
-   <issues>https://github.com/pluginsGLPI/watchman/issues</issues>
-   <readme>https://github.com/pluginsGLPI/watchman/blob/master/README.md</readme>
+   <homepage>https://github.com/bienvenu-gits/watchman-glpi</homepage>
+   <download>https://github.com/bienvenu-gits/watchman-glpi/releases</download>
+   <issues>https://github.com/bienvenu-gits/watchman-glpi/issues</issues>
+   <readme>https://github.com/bienvenu-gits/watchman-glpi#readme</readme>
    <authors>
-      <!-- Add as many author tag you want -->
-      <author>Teclib'</author>
+      <author>Global IT Service</author>
    </authors>
    <versions>
-      <!-- Add as many version tag you want -->
       <version>
          <num>0.0.1</num>
-         <!-- Add as many compatibility tag you want -->
-         <compatibility>9.4</compatibility>
-         <compatibility>9.3</compatibility>
-         <compatibility>9.2</compatibility>
+         <compatibility>10.0</compatibility>
       </version>
    </versions>
    <langs>
@@ -39,19 +65,23 @@
       <lang>en_GB</lang>
       <lang>fr_FR</lang>
    </langs>
-   <license>GPL V3+</license>
-   <!--tags>
+   <license>MIT</license>
+   <tags>
       <en>
-         <tag>One tag</tag>
-         <tag>Another tag</tag>
+         <tag>Security</tag>
+         <tag>CVE</tag>
+         <tag>Vulnerability</tag>
+         <tag>Monitoring</tag>
       </en>
       <fr>
-         <tag>Un tag</tag>
-         <tag>Un autre tag</tag>
+         <tag>Sécurité</tag>
+         <tag>CVE</tag>
+         <tag>Vulnérabilité</tag>
+         <tag>Surveillance</tag>
       </fr>
-   </tags-->
-   <!--screenshots>
-      <screenshot>https://github.com/pluginsGLPI/fields/raw/master/screenshot.png</screenshot>
-      <screenshot>https://github.com/pluginsGLPI/fields/raw/master/screenshot2.png</screenshot>
-   </screenshots-->
+   </tags>
+   <screenshots>
+      <screenshot>https://raw.githubusercontent.com/bienvenu-gits/watchman-glpi/main/assets/screenshot1-glpi.png</screenshot>
+      <screenshot>https://raw.githubusercontent.com/bienvenu-gits/watchman-glpi/main/assets/screenshot-glpi2.png</screenshot>
+   </screenshots>
 </root>
