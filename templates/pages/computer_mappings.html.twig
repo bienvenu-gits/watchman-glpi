@@ -183,12 +183,179 @@ rel="stylesheet" type="text/css" href="{{ base_url }}/plugins/watchman/assets/cs
             </div>
         </div>
     </div>
+
+    <!-- ═══ MODAL SÉLECTION MACHINES ═══ -->
+<div id="sync_machine_modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%;
+     background:rgba(0,0,0,0.5); z-index:9999; align-items:center; justify-content:center;">
+    <div style="background:#fff; border-radius:12px; width:700px; max-width:90%; max-height:80vh;
+                display:flex; flex-direction:column; overflow:hidden; box-shadow:0 20px 60px rgba(0,0,0,0.3);">
+
+        <!-- Header -->
+        <div style="padding:20px 24px; border-bottom:1px solid #e0e0e0; display:flex; justify-content:space-between; align-items:center;">
+            <div>
+                <h3 style="margin:0; font-size:16px;">Choisir les machines à synchroniser</h3>
+                <p style="margin:4px 0 0 0; font-size:12px; color:#666;">
+                    Sélectionnez les machines GLPI à envoyer vers Watchman
+                </p>
+                <!--<span style="font-size:12px; color:#666;">
+                Les machines sélectionnées seront envoyées vers Watchman pour analyse
+            </span>-->
+            </div>
+            <button onclick="closeSyncModal()" style="background:none; border:none; font-size:20px; cursor:pointer; color:#666;">✕</button>
+        </div>
+
+        <!-- Recherche + actions rapides -->
+        <div style="padding:16px 24px; border-bottom:1px solid #f0f0f0; display:flex; gap:10px; align-items:center;">
+            <input type="text" id="sync_modal_search" placeholder="Rechercher une machine..."
+                   class="cms_watchman_input" style="flex:1;"
+                   oninput="filterSyncModal(this.value)">
+            <button class="cms_watchman_btn cms_watchman_btn-outline btn-sm" onclick="syncModalSelectAll()">Tout</button>
+            <button class="cms_watchman_btn cms_watchman_btn-outline btn-sm" onclick="syncModalSelectNone()">Aucun</button>
+            <span id="sync_modal_count" style="font-size:12px; color:#666; white-space:nowrap;"></span>
+        </div>
+
+        <!-- Liste machines -->
+        <div style="overflow-y:auto; flex:1; padding:0 24px;">
+            <table class="cms_watchman_table">
+                <thead>
+                    <tr>
+                        <th width="40px">
+                            <input type="checkbox" id="sync_modal_check_all" onchange="syncModalToggleAll(this)">
+                        </th>
+                        <th>Nom de la machine</th>
+                        <th>Statut</th>
+                    </tr>
+                </thead>
+                <tbody id="sync_modal_body">
+                    <tr><td colspan="3" style="text-align:center; padding:30px;">
+                        <span class="cms_watchman_loading"></span>
+                    </td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Footer -->
+        <div style="padding:16px 24px; border-top:1px solid #e0e0e0; display:flex; justify-content:space-between; align-items:center;">
+                 <button class="cms_watchman_btn cms_watchman_btn-success" onclick="confirmSyncSelection()">
+                    <i class="fas fa-play me-1"></i> Synchroniser la sélection
+                </button>
+                <button class="cms_watchman_btn cms_watchman_btn-outline" onclick="closeSyncModal()">Annuler</button>
+       
+        </div>
+    </div>
+</div>
 </div>
 
 {# Scripts JavaScript #}
 {% block plugin_scripts %}
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 <script>
+
+// ═══ MODAL SYNCHRONISATION ═══
+let sync_modal_computers = [];
+
+function openSyncModal(computers) {
+    sync_modal_computers = computers || [];
+    document.getElementById('sync_machine_modal').style.display = 'flex';
+    document.getElementById('sync_modal_search').value = '';
+    renderSyncModalTable(sync_modal_computers);
+}
+
+function closeSyncModal() {
+    document.getElementById('sync_machine_modal').style.display = 'none';
+}
+
+// Fermer en cliquant dehors
+document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('sync_machine_modal').addEventListener('click', function(e) {
+        if (e.target === this) closeSyncModal();
+    });
+});
+
+function renderSyncModalTable(computers) {
+    const tbody = document.getElementById('sync_modal_body');
+
+    if (computers.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="3" style="text-align:center; padding:20px; color:#999;">
+            Aucune machine trouvée dans GLPI.<br>
+            <small>Ajoutez des ordinateurs dans Parc → Ordinateurs d'abord.</small>
+        </td></tr>`;
+        updateSyncModalCount();
+        return;
+    }
+
+    tbody.innerHTML = computers.map(c => `
+        <tr>
+            <td><input type="checkbox" class="sync_modal_checkbox" value="${c.id}"
+                       ${c.is_selected ? 'checked' : ''} onchange="updateSyncModalCount()"></td>
+            <td><strong>${c.name}</strong></td>
+            <td><span class="cms_watchman_badge cms_watchman_badge-${c.sync_status === 'success' ? 'success' : 'warning'}">
+                ${c.sync_status === 'success' ? 'Synchronisé' : 'Non synchronisé'}
+            </span></td>
+        </tr>
+    `).join('');
+
+    updateSyncModalCount();
+}
+
+function filterSyncModal(query) {
+    const q = query.toLowerCase();
+    renderSyncModalTable(sync_modal_computers.filter(c => c.name.toLowerCase().includes(q)));
+}
+
+function syncModalSelectAll()  { document.querySelectorAll('.sync_modal_checkbox').forEach(c => c.checked = true);  updateSyncModalCount(); }
+function syncModalSelectNone() { document.querySelectorAll('.sync_modal_checkbox').forEach(c => c.checked = false); updateSyncModalCount(); }
+function syncModalToggleAll(master) { document.querySelectorAll('.sync_modal_checkbox').forEach(c => c.checked = master.checked); updateSyncModalCount(); }
+
+function updateSyncModalCount() {
+    const checked = document.querySelectorAll('.sync_modal_checkbox:checked').length;
+    const total   = document.querySelectorAll('.sync_modal_checkbox').length;
+    document.getElementById('sync_modal_count').textContent = `${checked} / ${total} sélectionnée(s)`;
+}
+
+async function confirmSyncSelection() {
+    const selected_ids = [...document.querySelectorAll('.sync_modal_checkbox:checked')].map(c => parseInt(c.value));
+
+    if (selected_ids.length === 0) {
+        cms_watchman_show_notification('Veuillez sélectionner au moins une machine', 'warning');
+        return;
+    }
+
+    // 1. Sauvegarder la sélection
+    const saveResp = await fetch(
+        `${CMS_WATCHMAN_COMPUTER_CONFIG.baseUrl}/plugins/watchman/ajax/computer_select.php?action=save_selection`,
+        {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ selected_ids })
+        }
+    );
+    const saveData = await saveResp.json();
+
+    if (!saveData.success) {
+        cms_watchman_show_notification('Erreur lors de la sélection', 'error');
+        return;
+    }
+
+    closeSyncModal();
+    cms_watchman_show_notification(`${selected_ids.length} machine(s) sélectionnée(s) — Lancement de la synchronisation...`, 'success');
+
+    // 2. Lancer la synchronisation
+    try {
+        const result = await makeRequest('start_computer_sync', null, 'POST', {});
+        if (result.success) {
+            cms_watchman_show_notification(result.message, 'success');
+            setTimeout(() => location.reload(), 2000);
+        } else {
+            cms_watchman_show_notification(result.message || 'Synchronisation lancée', 'info');
+        }
+    } catch(e) {
+        cms_watchman_show_notification('Synchronisation lancée en arrière-plan', 'info');
+    }
+}
+
+
+
 // Configuration globale
 const CMS_WATCHMAN_COMPUTER_CONFIG = {
     ajaxUrl: '{{ base_url }}/plugins/watchman/ajax/computer_mappings.php',
@@ -423,7 +590,7 @@ function cms_watchman_render_computer_actions(computer) {
 /**
  * Démarre la synchronisation globale
  */
-async function cms_watchman_start_computer_sync() {
+/**async function cms_watchman_start_computer_sync() {
     const btn = document.getElementById('cms_watchman_start_computer_sync_btn');
     const originalText = btn.innerHTML;
     
@@ -432,6 +599,7 @@ async function cms_watchman_start_computer_sync() {
         btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>' + CMS_WATCHMAN_COMPUTER_CONFIG.translations.loading;
         
         const result = await cms_watchman_make_ajax_request('start_computer_sync', {});
+        
         
         if (result.success) {
             cms_watchman_show_notification(result.message, 'success');
@@ -443,6 +611,49 @@ async function cms_watchman_start_computer_sync() {
         }
     } catch (error) {
         cms_watchman_show_notification(error.message, 'error');
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+    }
+}*/
+
+async function cms_watchman_start_computer_sync() {
+    const btn = document.getElementById('cms_watchman_start_computer_sync_btn');
+    const originalText = btn.innerHTML;
+
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>' + CMS_WATCHMAN_COMPUTER_CONFIG.translations.loading;
+
+    try {
+        const resp = await fetch(
+        `${CMS_WATCHMAN_COMPUTER_CONFIG.baseUrl}/plugins/watchman/ajax/computer_select.php?action=get_all_computers`,
+        {
+            method: 'GET',
+            headers: { 'Content-Type': 'application/json' }
+        }
+    );
+
+        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+
+        const data = await resp.json();
+        const computers = data.computers ?? [];
+        const selected = computers.filter(c => c.is_selected);
+
+        if (selected.length === 0) {
+            openSyncModal(computers);
+        } else {
+            const result = await cms_watchman_make_ajax_request('start_computer_sync', {});
+
+            if (result.success) {
+                cms_watchman_show_notification(result.message, 'success');
+                setTimeout(() => location.reload(), 2000);
+            } else {
+                cms_watchman_show_notification(result.message || 'Erreur lors de la synchronisation', 'error');
+            }
+        }
+
+    } catch (e) {
+        cms_watchman_show_notification('Erreur : ' + e.message, 'error');
     } finally {
         btn.disabled = false;
         btn.innerHTML = originalText;

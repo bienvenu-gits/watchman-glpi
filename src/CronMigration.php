@@ -60,6 +60,7 @@ class CronMigration
                 `retry_count` int NOT NULL DEFAULT 0,
                 `error_message` text COLLATE {$collation},
                 `metadata` longtext COLLATE {$collation},
+                `is_selected` tinyint(1) NOT NULL DEFAULT 0,
                 `date_creation` timestamp DEFAULT CURRENT_TIMESTAMP,
                 `date_mod` timestamp DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
                 

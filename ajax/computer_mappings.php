@@ -145,6 +145,7 @@ function handleGetComputers($computerManager) {
                 c.name as computer_name
             FROM glpi_plugin_watchman_computer_mappings cm
             LEFT JOIN glpi_computers c ON cm.computers_id = c.id
+            WHERE cm.is_selected = 1
             ORDER BY cm.date_creation DESC
             LIMIT " . intval($start) . ", " . intval($per_page);
         
@@ -162,7 +163,8 @@ function handleGetComputers($computerManager) {
         
 
         $debug[] = "Calling countComputerMappings...";
-        $total = $computerManager->countComputerMappings([]);  // Aucune option
+        $total = $computerManager->countComputerMappings(['is_selected' => 1]);
+        // $total = $computerManager->countComputerMappings([]);  // Aucune option
         $debug[] = "countComputerMappings returned: " . $total;
         
         // Formatage des données pour l'affichage
