@@ -1,6 +1,20 @@
+
 {
+    "name": "bienvenu-gits/watchman-glpi",
+    "type": "glpi-plugin",
+    "description": "Plugin GLPI pour la surveillance des vulnérabilités via Watchman",
+    "keywords": ["glpi", "plugin", "watchman", "vulnerability", "security"],
+    "homepage": "https://github.com/bienvenu-gits/watchman-glpi",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Global IT Service",
+            "homepage": "https://www.gits.bj"
+        }
+    ],
     "require": {
-        "php": ">=7.4"
+        "php": ">=7.4",
+        "glpi/glpi": ">=10.0.0"
     },
     "require-dev": {
         "glpi-project/tools": "^0.4"
@@ -11,5 +25,16 @@
             "php": "7.4.0"
         },
         "sort-packages": true
+    },
+    "extra": {
+        "glpi-plugin": {
+            "name": "Watchman",
+            "key": "watchman"
+        }
+    },
+    "autoload": {
+        "psr-4": {
+            "GlpiPlugin\\Watchman\\": "src/"
+        }
     }
 }
