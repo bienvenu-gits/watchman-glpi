@@ -141,6 +141,108 @@
 	        </div> #}
 
 
+	<hr style="margin: 28px 0 20px;">
+
+	<h3 style="font-size:15px; font-weight:600; color:#343a40; margin-bottom:16px;">
+		<i class="fas fa-sliders-h me-2" style="color:#6c757d;"></i>
+		{{ __('Fonctionnalités', 'watchman') }}
+	</h3>
+
+	<div class="row">
+		<div class="col-md-4">
+			<div class="mb-4">
+				<label class="form-label" style="font-weight:500;">
+					{{ __('Synchronisation des alertes', 'watchman') }}
+				</label>
+				<div class="d-flex align-items-center gap-3 mt-1">
+					<label class="cms_watchman_toggle" style="display:flex;align-items:center;gap:10px;cursor:pointer;margin:0;">
+						<input type="hidden" name="sync_alerts_enabled" value="0">
+						<input type="checkbox" name="sync_alerts_enabled" value="1"
+							{{ config.sync_alerts_enabled|default('0') == '1' ? 'checked' : '' }}
+							style="display:none;"
+							onchange="this.previousElementSibling.value = this.checked ? '1' : '0'">
+						<span class="cms_watchman_toggle_track" style="
+							position:relative; display:inline-block; width:44px; height:24px;
+							background:{{ config.sync_alerts_enabled|default('0') == '1' ? '#2d6a4f' : '#ced4da' }};
+							border-radius:12px; transition:background .2s; flex-shrink:0;"
+							onclick="toggleSwitch(this)">
+							<span style="position:absolute; top:3px; left:{{ config.sync_alerts_enabled|default('0') == '1' ? '23px' : '3px' }};
+								width:18px; height:18px; background:#fff; border-radius:50%; transition:left .2s;"></span>
+						</span>
+						<span style="font-size:13px; color:#495057;">
+							{{ config.sync_alerts_enabled|default('0') == '1' ? __('Activée', 'watchman') : __('Désactivée', 'watchman') }}
+						</span>
+					</label>
+				</div>
+				<p style="font-size:12px; color:#6c757d; margin-top:6px;">
+					{{ __('Active la tâche cron de récupération des alertes depuis Watchman', 'watchman') }}
+				</p>
+			</div>
+		</div>
+
+		<div class="col-md-4">
+			<div class="mb-4">
+				<label class="form-label" style="font-weight:500;">
+					{{ __('Onglet Alertes', 'watchman') }}
+				</label>
+				<div class="d-flex align-items-center gap-3 mt-1">
+					<label class="cms_watchman_toggle" style="display:flex;align-items:center;gap:10px;cursor:pointer;margin:0;">
+						<input type="hidden" name="show_alerts_tab" value="0">
+						<input type="checkbox" name="show_alerts_tab" value="1"
+							{{ config.show_alerts_tab|default('0') == '1' ? 'checked' : '' }}
+							style="display:none;"
+							onchange="this.previousElementSibling.value = this.checked ? '1' : '0'">
+						<span class="cms_watchman_toggle_track" style="
+							position:relative; display:inline-block; width:44px; height:24px;
+							background:{{ config.show_alerts_tab|default('0') == '1' ? '#2d6a4f' : '#ced4da' }};
+							border-radius:12px; transition:background .2s; flex-shrink:0;"
+							onclick="toggleSwitch(this)">
+							<span style="position:absolute; top:3px; left:{{ config.show_alerts_tab|default('0') == '1' ? '23px' : '3px' }};
+								width:18px; height:18px; background:#fff; border-radius:50%; transition:left .2s;"></span>
+						</span>
+						<span style="font-size:13px; color:#495057;">
+							{{ config.show_alerts_tab|default('0') == '1' ? __('Visible', 'watchman') : __('Masqué', 'watchman') }}
+						</span>
+					</label>
+				</div>
+				<p style="font-size:12px; color:#6c757d; margin-top:6px;">
+					{{ __('Affiche ou masque l\'onglet Alertes dans la barre de navigation', 'watchman') }}
+				</p>
+			</div>
+		</div>
+
+		<div class="col-md-4">
+			<div class="mb-4">
+				<label class="form-label" style="font-weight:500;">
+					{{ __('Création de tickets', 'watchman') }}
+				</label>
+				<div class="d-flex align-items-center gap-3 mt-1">
+					<label class="cms_watchman_toggle" style="display:flex;align-items:center;gap:10px;cursor:pointer;margin:0;">
+						<input type="hidden" name="ticket_creation_enabled" value="0">
+						<input type="checkbox" name="ticket_creation_enabled" value="1"
+							{{ config.ticket_creation_enabled|default('0') == '1' ? 'checked' : '' }}
+							style="display:none;"
+							onchange="this.previousElementSibling.value = this.checked ? '1' : '0'">
+						<span class="cms_watchman_toggle_track" style="
+							position:relative; display:inline-block; width:44px; height:24px;
+							background:{{ config.ticket_creation_enabled|default('0') == '1' ? '#2d6a4f' : '#ced4da' }};
+							border-radius:12px; transition:background .2s; flex-shrink:0;"
+							onclick="toggleSwitch(this)">
+							<span style="position:absolute; top:3px; left:{{ config.ticket_creation_enabled|default('0') == '1' ? '23px' : '3px' }};
+								width:18px; height:18px; background:#fff; border-radius:50%; transition:left .2s;"></span>
+						</span>
+						<span style="font-size:13px; color:#495057;">
+							{{ config.ticket_creation_enabled|default('0') == '1' ? __('Activée', 'watchman') : __('Désactivée', 'watchman') }}
+						</span>
+					</label>
+				</div>
+				<p style="font-size:12px; color:#6c757d; margin-top:6px;">
+					{{ __('Permet de créer des tickets GLPI depuis les alertes Watchman', 'watchman') }}
+				</p>
+			</div>
+		</div>
+	</div>
+
 	<div class="d-flex justify-content-end mt-3">
 		<button type="submit" name="update" class="cms_watchman_btn cms_watchman_primary">
 			<i class="fas fa-save me-1"></i>
@@ -148,6 +250,30 @@
 		</button>
 	</div>
 </form>
+
+<script>
+function toggleSwitch(track) {
+    const label  = track.closest('label');
+    const hidden   = label.querySelector('input[type=hidden]');
+    const checkbox = label.querySelector('input[type=checkbox]');
+    const knob     = track.querySelector('span');
+    const text     = label.querySelector('span:last-child');
+
+    const nowOn = !checkbox.checked;
+    checkbox.checked = nowOn;
+    hidden.value = nowOn ? '1' : '0';
+    track.style.background = nowOn ? '#2d6a4f' : '#ced4da';
+    knob.style.left = nowOn ? '23px' : '3px';
+
+    const labels = {
+        sync_alerts_enabled:     [' Désactivée', ' Activée'],
+        show_alerts_tab:         [' Masqué',     ' Visible'],
+        ticket_creation_enabled: [' Désactivée', ' Activée'],
+    };
+    const name = checkbox.name;
+    if (labels[name]) text.textContent = nowOn ? labels[name][1] : labels[name][0];
+}
+</script>
 
 
 <!-- ═══ SECTION MACHINES ═══ -->
@@ -190,11 +316,21 @@
         
         <!-- Header modal -->
         <div style="padding:20px 24px; border-bottom:1px solid #e0e0e0; display:flex; justify-content:space-between; align-items:center;">
-            <div>
+            <div style="flex:1;">
                 <h3 style="margin:0; font-size:16px;">Choisir les machines à synchroniser</h3>
                 <p style="margin:4px 0 0 0; font-size:12px; color:#666;">
                     Sélectionnez les machines GLPI à envoyer vers Watchman
                 </p>
+                <!-- Quota progress bar -->
+                <div id="modal_quota_bar_container" style="display:none; margin-top:10px; max-width:400px;">
+                    <div style="display:flex; justify-content:space-between; font-size:11px; color:#666; margin-bottom:4px;">
+                        <span id="modal_quota_label">0 / 0 machines sélectionnées</span>
+                        <span id="modal_quota_remaining"></span>
+                    </div>
+                    <div style="height:6px; background:#e9ecef; border-radius:3px; overflow:hidden;">
+                        <div id="modal_quota_fill" style="height:100%; width:0%; background:#28a745; border-radius:3px; transition:width .3s, background .3s;"></div>
+                    </div>
+                </div>
             </div>
             <button onclick="closeMachineModal()" style="background:none; border:none; font-size:20px; cursor:pointer; color:#666;">✕</button>
         </div>
@@ -207,6 +343,13 @@
             <button class="cms_watchman_btn cms_watchman_btn-outline btn-sm" onclick="modalSelectAll()">Tout</button>
             <button class="cms_watchman_btn cms_watchman_btn-outline btn-sm" onclick="modalSelectNone()">Aucun</button>
             <span id="modal_count" style="font-size:12px; color:#666; white-space:nowrap;"></span>
+        </div>
+
+        <!-- Quota limit banner -->
+        <div id="modal_quota_banner" style="display:none; margin:0 24px 8px; padding:10px 16px;
+             background:#fff3cd; border:1px solid #ffc107; border-radius:6px; font-size:13px; color:#856404;">
+            <i class="fas fa-exclamation-triangle" style="margin-right:6px;"></i>
+            <strong>Limite atteinte</strong> — Désélectionnez d'abord certaines machines pour en ajouter d'autres.
         </div>
 
         <!-- Liste des machines -->
@@ -243,7 +386,8 @@
 //  VARIABLES
 // ═══════════════════════════════════════════
 const WATCHMAN_SELECT_URL = '{{ base_url }}/plugins/watchman/ajax/computer_select.php';
-let modal_computers = [];
+let modal_computers      = [];
+let subscription_quota   = 0;
 
 // ═══════════════════════════════════════════
 //  CHARGEMENT INITIAL
@@ -296,10 +440,17 @@ async function openMachineModal() {
     document.getElementById('machine_modal').style.display = 'flex';
     document.getElementById('modal_search').value = '';
 
-    const resp = await fetch(`${WATCHMAN_SELECT_URL}?action=get_all_computers`);
-    const data = await resp.json();
-    if (data.success) {
-        modal_computers = data.computers;
+    const [compResp, subResp] = await Promise.all([
+        fetch(`${WATCHMAN_SELECT_URL}?action=get_all_computers`),
+        fetch(`${WATCHMAN_SELECT_URL}?action=get_subscription`)
+    ]);
+    const compData = await compResp.json();
+    const subData  = await subResp.json();
+
+    subscription_quota = (subData.success && subData.quantity > 0) ? subData.quantity : 0;
+
+    if (compData.success) {
+        modal_computers = compData.computers;
         renderModalTable(modal_computers);
     }
 }
@@ -352,6 +503,45 @@ function updateModalCount() {
     const checked = document.querySelectorAll('.modal_checkbox:checked').length;
     const total   = document.querySelectorAll('.modal_checkbox').length;
     document.getElementById('modal_count').textContent = `${checked} / ${total} sélectionnée(s)`;
+    updateQuotaBar(checked);
+}
+
+function updateQuotaBar(checked) {
+    const container = document.getElementById('modal_quota_bar_container');
+    const banner    = document.getElementById('modal_quota_banner');
+    if (!container) return;
+
+    if (!subscription_quota) {
+        container.style.display = 'none';
+        if (banner) banner.style.display = 'none';
+        return;
+    }
+
+    container.style.display = 'block';
+
+    const pct  = Math.min(100, Math.round((checked / subscription_quota) * 100));
+    const rem  = subscription_quota - checked;
+    const fill = document.getElementById('modal_quota_fill');
+    document.getElementById('modal_quota_label').textContent     = `${checked} / ${subscription_quota} machines sélectionnées`;
+    document.getElementById('modal_quota_remaining').textContent = rem > 0 ? `${rem} restante(s)` : 'Limite atteinte';
+
+    fill.style.width = pct + '%';
+
+    if (pct >= 100) {
+        fill.style.background = '#dc3545';
+        if (banner) banner.style.display = 'block';
+        document.querySelectorAll('.modal_checkbox:not(:checked)').forEach(cb => {
+            cb.disabled = true;
+            cb.title    = 'Limite atteinte — désélectionnez d\'abord certaines machines';
+        });
+    } else {
+        fill.style.background = pct >= 80 ? '#ffc107' : '#28a745';
+        if (banner) banner.style.display = 'none';
+        document.querySelectorAll('.modal_checkbox:not(:checked)').forEach(cb => {
+            cb.disabled = false;
+            cb.title    = '';
+        });
+    }
 }
 
 async function saveModalSelection() {
@@ -378,12 +568,13 @@ async function saveModalSelection() {
 }
 
 async function removeMachine(computer_id) {
-    // Récupérer la liste actuelle des sélectionnés
+    const confirmed = await showRemovalWarning();
+    if (!confirmed) return;
+
     const resp = await fetch(`${WATCHMAN_SELECT_URL}?action=get_all_computers`);
     const data = await resp.json();
     if (!data.success) return;
 
-    // Retirer la machine désélectionnée
     const selected_ids = data.computers
         .filter(c => c.is_selected && c.id !== computer_id)
         .map(c => c.id);
@@ -396,5 +587,42 @@ async function removeMachine(computer_id) {
 
     const data2 = await resp2.json();
     if (data2.success) loadSelectedMachines();
+}
+
+function showRemovalWarning() {
+    return new Promise(resolve => {
+        const overlay = document.createElement('div');
+        overlay.style.cssText = 'position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.55); z-index:99999; display:flex; align-items:center; justify-content:center;';
+        overlay.innerHTML = `
+            <div style="background:#fff; border-radius:12px; max-width:480px; width:90%; padding:28px; box-shadow:0 20px 60px rgba(0,0,0,0.3);">
+                <div style="display:flex; align-items:flex-start; gap:14px; margin-bottom:20px;">
+                    <div style="background:#fff3cd; border-radius:50%; width:46px; height:46px; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                        <i class="fas fa-exclamation-triangle" style="color:#e67e22; font-size:18px;"></i>
+                    </div>
+                    <div>
+                        <h4 style="margin:0 0 8px 0; font-size:16px; font-weight:600;">Information de sécurité</h4>
+                        <p style="margin:0; font-size:14px; color:#495057; line-height:1.6;">
+                            Cette action retire la machine de la liste de synchronisation <strong>dans ce plugin uniquement</strong>.
+                            La machine reste présente dans votre dashboard Watchman.
+                        </p>
+                        <p style="margin:10px 0 0 0; font-size:14px; color:#495057; line-height:1.6;">
+                            Pour la supprimer définitivement, connectez-vous sur <strong>votre compte watchman.bj</strong>
+                            et supprimez-la depuis votre dashboard. La suppression directe dans le plugin n'est pas
+                            disponible pour des raisons de sécurité.
+                        </p>
+                    </div>
+                </div>
+                <div style="display:flex; justify-content:flex-end; gap:10px;">
+                    <button id="warn_cancel" class="cms_watchman_btn cms_watchman_btn-outline">Annuler</button>
+                    <button id="warn_confirm" class="cms_watchman_btn" style="background:#dc3545; color:#fff; border-color:#dc3545;">
+                        Retirer du plugin
+                    </button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(overlay);
+        overlay.querySelector('#warn_cancel').onclick  = () => { overlay.remove(); resolve(false); };
+        overlay.querySelector('#warn_confirm').onclick = () => { overlay.remove(); resolve(true); };
+    });
 }
 </script>

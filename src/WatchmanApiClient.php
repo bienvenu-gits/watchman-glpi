@@ -370,9 +370,29 @@ public function makeFileUploadRequest($endpoint, $filepath, $custom_headers = nu
         'Accept: application/json'
     ];
 
-    return $this->makeRequestWithRetry($endpoint, 'GET', null,1, $custom_headers);
+    return $this->makeRequestWithRetry($endpoint, 'GET', null, 1, $custom_headers);
 }
-    
+
+/**
+ * Récupère la souscription de l'agent (quantité de machines autorisées)
+ */
+public function getSubscription() {
+    $agent_id     = WatchmanConfig::getConfigValue('public_key');
+    $agent_secret = WatchmanConfig::getConfigValue('secret_key');
+
+    if (empty($agent_id) || empty($agent_secret)) {
+        return ['success' => false, 'error' => __('Configuration agent manquante', 'watchman')];
+    }
+
+    $custom_headers = [
+        'AGENT-ID: ' . $agent_id,
+        'AGENT-SECRET: ' . $agent_secret,
+        'Accept: application/json',
+    ];
+
+    return $this->makeRequestWithRetry('agent/subscription', 'GET', null, 1, $custom_headers);
+}
+
     /**
      * Gestion du circuit breaker
      */

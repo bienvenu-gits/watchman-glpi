@@ -135,14 +135,17 @@ class WatchmanConfig extends CommonDBTM
     public function getDefaultConfig()
     {
         return [
-            'secret_key' => '',
-            'public_key' => '',
-            'api_timeout' => '30',
-            'is_active' => '1',
-            'cron_enabled' => '1',
-            'cron_frequency' => '3600',  // 1 heure par défaut
-            'cron_last_run' => '',
-            'cron_status' => 'stopped',
+            'secret_key'              => '',
+            'public_key'              => '',
+            'api_timeout'             => '30',
+            'is_active'               => '1',
+            'cron_enabled'            => '1',
+            'cron_frequency'          => '3600',
+            'cron_last_run'           => '',
+            'cron_status'             => 'stopped',
+            'sync_alerts_enabled'     => '0',
+            'show_alerts_tab'         => '0',
+            'ticket_creation_enabled' => '0',
         ];
     }
 
@@ -210,7 +213,10 @@ class WatchmanConfig extends CommonDBTM
             "circuit_breaker_failures",
             "last_failure_time",
             "last_alerts_sync_date",
-            'show_welcome'
+            'show_welcome',
+            'sync_alerts_enabled',
+            'show_alerts_tab',
+            'ticket_creation_enabled',
         ];
 
         foreach ($config_fields as $field) {

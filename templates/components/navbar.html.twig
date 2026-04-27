@@ -15,12 +15,14 @@
 						Ressources
 					</a>
 				</li>
+				{% if features.show_alerts_tab is not defined or features.show_alerts_tab == '1' %}
 				<li class="cms_watchman_nav-link{% if current_page == 'alertmanager' %} active{% endif %}">
 					<a href="{{ base_url }}/plugins/watchman/front/alertmanager.php" class="flex w-full items-center border-b border-gray-800 py-2 px-3 font-medium md:border-0 md:p-0">
 						<i class="fas fa-info-circle mr-1 text-lg"></i>
 						Alertes
 					</a>
 				</li>
+				{% endif %}
 			</ul>
 		</div>
 		<div class="order-1 ml-auto flex items-center md:order-2">

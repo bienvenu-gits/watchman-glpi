@@ -69,11 +69,15 @@ switch ($action) {
     case 'mark_as_patched':
     case 'create_ticket':
     case 'bulk_action':
-        // Actions de modification - nécessite le droit de gérer les alertes
         WatchmanProfile::checkRightOr403(WatchmanProfile::RIGHT_WATCHMAN_MANAGE, WatchmanProfile::UPDATE);
         if ($action === 'mark_as_patched') {
             handleMarkAsPatched($alertManager);
         } elseif ($action === 'create_ticket') {
+            if (\GlpiPlugin\Watchman\WatchmanConfig::getConfigValue('ticket_creation_enabled', '1') !== '1') {
+                http_response_code(403);
+                echo json_encode(['error' => __('La création de tickets est désactivée dans la configuration', 'watchman')]);
+                exit;
+            }
             handleCreateTicket($alertManager);
         } else {
             handleBulkAction($alertManager);

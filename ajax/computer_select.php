@@ -85,6 +85,23 @@ switch ($action) {
         echo json_encode(['success' => true, 'message' => count($selected_ids) . ' machine(s) sélectionnée(s)']);
         break;
 
+    case 'get_subscription':
+        try {
+            $api_client  = new \GlpiPlugin\Watchman\WatchmanApiClient();
+            $result      = $api_client->getSubscription();
+
+            if ($result['success'] && isset($result['data'])) {
+                $data     = $result['data'];
+                $quantity = (int)($data['quantity'] ?? $data['data']['quantity'] ?? 0);
+                echo json_encode(['success' => true, 'quantity' => $quantity]);
+            } else {
+                echo json_encode(['success' => false, 'quantity' => 0, 'error' => $result['error'] ?? 'Erreur API']);
+            }
+        } catch (Exception $e) {
+            echo json_encode(['success' => false, 'quantity' => 0, 'error' => $e->getMessage()]);
+        }
+        break;
+
     default:
         echo json_encode(['success' => false, 'error' => 'Action inconnue']);
 }

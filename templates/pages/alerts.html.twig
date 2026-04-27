@@ -281,6 +281,8 @@
     const WATCHMAN_CONFIG = {
     ajaxUrl: '{{ path('plugins/watchman/ajax/alerts.php') }}',
 	csrfToken: '{{ csrf_token }}',
+	ticketCreationEnabled: {{ features.ticket_creation_enabled is defined and features.ticket_creation_enabled == '1' ? 'true' : 'false' }},
+	syncAlertsEnabled: {{ features.sync_alerts_enabled is defined and features.sync_alerts_enabled == '1' ? 'true' : 'false' }},
 	translations: {
 	confirmDelete: '{{ __("Êtes-vous sûr de vouloir supprimer cette alerte ?", "watchman") }}',
     confirmBulkDelete: '{{ __("Êtes-vous sûr de vouloir supprimer les alertes sélectionnées ?", "watchman") }}',

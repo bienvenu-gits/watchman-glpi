@@ -4,6 +4,7 @@ namespace GlpiPlugin\Watchman;
 use CommonDBTM;
 use Glpi\Application\View\TemplateRenderer;
 use Session;
+use GlpiPlugin\Watchman\WatchmanConfig;
 
 class WatchmanManager extends CommonDBTM
 {
@@ -18,14 +19,24 @@ class WatchmanManager extends CommonDBTM
         return _n('Watchman', 'Watchman', $nb);
     }
 
+    private static function featureConfig(): array
+    {
+        return [
+            'show_alerts_tab'         => WatchmanConfig::getConfigValue('show_alerts_tab', '0'),
+            'sync_alerts_enabled'     => WatchmanConfig::getConfigValue('sync_alerts_enabled', '0'),
+            'ticket_creation_enabled' => WatchmanConfig::getConfigValue('ticket_creation_enabled', '0'),
+        ];
+    }
+
     function showDashboard()
     {
         global $CFG_GLPI;
-        
+
         TemplateRenderer::getInstance()->display('@watchman/pages/welcome.html.twig', [
-            'item'   => $this,
-            'base_url' => $CFG_GLPI["root_doc"],
-            'csrf_token' => Session::getNewCSRFToken(),  // if you need CSRF token
+            'item'       => $this,
+            'base_url'   => $CFG_GLPI["root_doc"],
+            'csrf_token' => Session::getNewCSRFToken(),
+            'features'   => self::featureConfig(),
         ]);
         
 
@@ -50,10 +61,11 @@ class WatchmanManager extends CommonDBTM
         }
         // @myplugin is a shortcut to the **templates** directory of your plugin
         TemplateRenderer::getInstance()->display('@watchman/pages/alerts.html.twig', [
-            'item'   => $this,
-            'base_url' => $CFG_GLPI["root_doc"],
+            'item'         => $this,
+            'base_url'     => $CFG_GLPI["root_doc"],
             'current_page' => 'alertmanager',
-            'csrf_token' => Session::getNewCSRFToken(),  // if you need CSRF token
+            'csrf_token'   => Session::getNewCSRFToken(),
+            'features'     => self::featureConfig(),
         ]);
         
 
@@ -65,10 +77,11 @@ class WatchmanManager extends CommonDBTM
         global $CFG_GLPI;
 
         TemplateRenderer::getInstance()->display('@watchman/pages/logs.html.twig', [
-            'item'       => $this,
-            'base_url'   => $CFG_GLPI["root_doc"],
+            'item'         => $this,
+            'base_url'     => $CFG_GLPI["root_doc"],
             'current_page' => 'logmanager',
-            'csrf_token' => Session::getNewCSRFToken(),
+            'csrf_token'   => Session::getNewCSRFToken(),
+            'features'     => self::featureConfig(),
         ]);
 
         return true;
@@ -93,11 +106,12 @@ class WatchmanManager extends CommonDBTM
         $computers = $computer_manager->getComputerMappings(['limit' => 1000]);
         
         TemplateRenderer::getInstance()->display('@watchman/pages/computer_mappings.html.twig', [
-            'item'   => $this,
-            'computers' => $computers,
-            'base_url' => $CFG_GLPI["root_doc"],
+            'item'         => $this,
+            'computers'    => $computers,
+            'base_url'     => $CFG_GLPI["root_doc"],
             'current_page' => 'computermapping',
-            'csrf_token' => Session::getNewCSRFToken(),
+            'csrf_token'   => Session::getNewCSRFToken(),
+            'features'     => self::featureConfig(),
         ]);
         
         return true;

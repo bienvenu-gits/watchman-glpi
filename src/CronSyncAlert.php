@@ -135,6 +135,12 @@ class CronSyncAlert extends CronManager
             return 0;
         }
 
+        if (WatchmanConfig::getConfigValue('sync_alerts_enabled', '1') !== '1') {
+            $task->log(__('Synchronisation des alertes désactivée dans la configuration', 'watchman'));
+            CronMonitor::stopMonitoring(__CLASS__ . '::cronSyncAlerts', $task->getID(), 'skipped');
+            return 1;
+        }
+
         $max_alerts_per_batch = $task->fields['param'] ?? self::DEFAULT_BATCH_SIZE;
 
         $api_client = new WatchmanApiClient();

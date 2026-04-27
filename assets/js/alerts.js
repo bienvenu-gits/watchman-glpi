@@ -295,13 +295,16 @@ class WatchmanAlertsManager {
             ? `<span class="cms_watchman_badge cms_watchman_badge_${alert.patched.class}">${alert.patched.label}</span>`
             : `<span class="cms_watchman_badge cms_watchman_badge_${alert.patched.class}">${alert.patched.label}</span>`;
             
-        const ticketLink = alert.ticket 
+        const ticketEnabled = typeof WATCHMAN_CONFIG !== 'undefined' ? WATCHMAN_CONFIG.ticketCreationEnabled : true;
+        const ticketLink = alert.ticket
             ? `<a href="${alert.ticket.url}" target="_blank" class="btn btn-sm btn-info">
                  <i class="fa fa-external-link"></i> #${alert.ticket.id}
                </a>`
-            : `<button class="cms_watchman_btn btn-sm cms_watchman_button_success create-ticket-btn" data-alert-id="${alert.id}">
-                 <i class="fa fa-plus"></i> Créer
-               </button>`;
+            : (ticketEnabled
+                ? `<button class="cms_watchman_btn btn-sm cms_watchman_button_success create-ticket-btn" data-alert-id="${alert.id}">
+                     <i class="fa fa-plus"></i> Créer
+                   </button>`
+                : `<span class="cms_watchman_badge" style="color:#6c757d;">—</span>`);
                
         const patchButton = alert.patched.is_patched
             ? `<button class="cms_watchman_btn btn-sm cms_watchman_btn-warning patch-alert-btn" 
