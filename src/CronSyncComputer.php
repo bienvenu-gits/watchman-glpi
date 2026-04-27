@@ -22,7 +22,7 @@ class CronSyncComputer extends CronManager
 {
 
     // Configuration des tâches
-    const DEFAULT_BATCH_SIZE = 50;
+    const DEFAULT_BATCH_SIZE = 200;
     const DEFAULT_MAX_RETRIES = 3;
     const SYNC_COMPUTERS_INTERVAL = 15; // minutes
     const HEALTH_CHECK_INTERVAL = 10; // minutes
@@ -135,26 +135,32 @@ class CronSyncComputer extends CronManager
 
                     $task->log(sprintf(__('%d ordinateurs synchronisés avec succès', 'watchman'), $processed));
 
-                    self::logSyncActivity(null, 'sync_computer', 'success',
+                    self::logSyncActivity(
+                        null,
+                        'sync_computer',
+                        'success',
                         sprintf('%d ordinateurs synchronisés', $processed),
                         [
-                            'execution_time'    => $api_duration,
-                            'memory_usage'      => memory_get_peak_usage(true),
+                            'execution_time' => $api_duration,
+                            'memory_usage' => memory_get_peak_usage(true),
                             'api_response_code' => $response['data']['status_code'] ?? 200,
-                            'batch_id'          => $batch_id,
+                            'batch_id' => $batch_id,
                         ]
                     );
                 } else {
                     $errors = count($computers_to_sync);
                     $task->log(__('Erreur lors de la synchronisation: ', 'watchman') . $response['error']);
 
-                    self::logSyncActivity(null, 'sync_computer', 'error',
+                    self::logSyncActivity(
+                        null,
+                        'sync_computer',
+                        'error',
                         $response['error'],
                         [
                             'execution_time' => $api_duration,
-                            'memory_usage'   => memory_get_peak_usage(true),
-                            'batch_id'       => $batch_id,
-                            'error_details'  => json_encode($response),
+                            'memory_usage' => memory_get_peak_usage(true),
+                            'batch_id' => $batch_id,
+                            'error_details' => json_encode($response),
                         ]
                     );
                 }
@@ -165,13 +171,16 @@ class CronSyncComputer extends CronManager
                 $task->log($error_msg);
                 Toolbox::logInFile('watchman_cron_error', $error_msg);
 
-                self::logSyncActivity(null, 'sync_computer', 'error',
+                self::logSyncActivity(
+                    null,
+                    'sync_computer',
+                    'error',
                     $e->getMessage(),
                     [
                         'execution_time' => $api_duration,
-                        'memory_usage'   => memory_get_peak_usage(true),
-                        'batch_id'       => $batch_id,
-                        'error_details'  => $e->getTraceAsString(),
+                        'memory_usage' => memory_get_peak_usage(true),
+                        'batch_id' => $batch_id,
+                        'error_details' => $e->getTraceAsString(),
                     ]
                 );
             }
@@ -192,7 +201,10 @@ class CronSyncComputer extends CronManager
             $task->log(__('Erreur critique: ', 'watchman') . $e->getMessage());
             Toolbox::logInFile('watchman_cron_critical', $e->getMessage() . "\n" . $e->getTraceAsString());
 
-            self::logSyncActivity(null, 'sync_computer', 'error',
+            self::logSyncActivity(
+                null,
+                'sync_computer',
+                'error',
                 'Erreur critique: ' . $e->getMessage(),
                 ['error_details' => $e->getTraceAsString()]
             );
@@ -286,60 +298,152 @@ class CronSyncComputer extends CronManager
      * Récupère les informations réseau d'un ordinateur
      * CORRIGÉ: Utilisation correcte des jointures GLPI
      */
-    private static function getComputerNetworkInfo($computer_id)
-    {
-        global $DB;
+    // private static function getComputerNetworkInfo($computer_id)
+    // {
+    //     global $DB;
 
-        $network_info = [
-            'ip' => '',
-            'mac' => ''
-        ];
+    //     $network_info = [
+    //         'ip' => '',
+    //         'mac' => ''
+    //     ];
 
-        // Requête corrigée pour GLPI
-        $iterator = $DB->request([
-            'SELECT' => [
-                'glpi_networkports.mac',
-                'glpi_ipaddresses.name AS ip'
-            ],
-            'FROM' => 'glpi_networkports',
-            'LEFT JOIN' => [
-                'glpi_networknames' => [
-                    'FKEY' => [
-                        'glpi_networknames' => 'items_id',
-                        'glpi_networkports' => 'id',
-                        ['AND' => ['glpi_networknames.itemtype' => 'NetworkPort']]
-                    ]
-                ],
-                'glpi_ipaddresses' => [
-                    'FKEY' => [
-                        'glpi_ipaddresses' => 'items_id',
-                        'glpi_networknames' => 'id',
-                        ['AND' => ['glpi_ipaddresses.itemtype' => 'NetworkName']]
-                    ]
-                ]
-            ],
-            'WHERE' => [
-                'glpi_networkports.items_id' => $computer_id,
-                'glpi_networkports.itemtype' => 'Computer',
-                'glpi_networkports.is_deleted' => 0
-            ],
-            'ORDER' => 'glpi_networkports.logical_number ASC',
-            'LIMIT' => 1
-        ]);
+    //     // Requête corrigée pour GLPI
+    //     $iterator = $DB->request([
+    //         'SELECT' => [
+    //             'glpi_networkports.mac',
+    //             'glpi_ipaddresses.name AS ip'
+    //         ],
+    //         'FROM' => 'glpi_networkports',
+    //         'LEFT JOIN' => [
+    //             'glpi_networknames' => [
+    //                 'FKEY' => [
+    //                     'glpi_networknames' => 'items_id',
+    //                     'glpi_networkports' => 'id',
+    //                     ['AND' => ['glpi_networknames.itemtype' => 'NetworkPort']]
+    //                 ]
+    //             ],
+    //             'glpi_ipaddresses' => [
+    //                 'FKEY' => [
+    //                     'glpi_ipaddresses' => 'items_id',
+    //                     'glpi_networknames' => 'id',
+    //                     ['AND' => ['glpi_ipaddresses.itemtype' => 'NetworkName']]
+    //                 ]
+    //             ]
+    //         ],
+    //         'WHERE' => [
+    //             'glpi_networkports.items_id' => $computer_id,
+    //             'glpi_networkports.itemtype' => 'Computer',
+    //             'glpi_networkports.is_deleted' => 0
+    //         ],
+    //         'ORDER' => 'glpi_networkports.logical_number ASC',
+    //         'LIMIT' => 1
+    //     ]);
 
-        if (count($iterator) > 0) {
-            $network = $iterator->current();
-            $network_info['ip'] = $network['ip'] ?? '';
-            $network_info['mac'] = $network['mac'] ?? '';
-        }
+    //     if (count($iterator) > 0) {
+    //         $network = $iterator->current();
+    //         $network_info['ip'] = $network['ip'] ?? '';
+    //         $network_info['mac'] = $network['mac'] ?? '';
+    //     }
 
-        return $network_info;
-    }
+    //     return $network_info;
+    // }
 
     /**
      * Récupère les informations système d'un ordinateur
      * CORRIGÉ: Utilisation de la table Item_OperatingSystem
      */
+
+
+
+    private static function getComputerNetworkInfo($computer_id)
+{
+    global $DB;
+
+    $network_info = [
+        'ip' => '',
+        'mac' => ''
+    ];
+
+    $iterator = $DB->request([
+        'SELECT' => [
+            'glpi_networkports.mac',
+            'glpi_ipaddresses.name AS ip'
+        ],
+        'FROM' => 'glpi_networkports',
+        'LEFT JOIN' => [
+            'glpi_networknames' => [
+                'FKEY' => [
+                    'glpi_networknames' => 'items_id',
+                    'glpi_networkports'  => 'id',
+                    ['AND' => ['glpi_networknames.itemtype' => 'NetworkPort']]
+                ]
+            ],
+            'glpi_ipaddresses' => [
+                'FKEY' => [
+                    'glpi_ipaddresses' => 'items_id',
+                    'glpi_networknames' => 'id',
+                    ['AND' => ['glpi_ipaddresses.itemtype' => 'NetworkName']]
+                ]
+            ]
+        ],
+        'WHERE' => [
+            'glpi_networkports.items_id' => $computer_id,
+            'glpi_networkports.itemtype'  => 'Computer',
+            'glpi_networkports.is_deleted' => 0,
+            // Exclure les MACs nulles ou invalides directement en SQL
+            ['NOT' => ['glpi_networkports.mac' => null]],
+            ['NOT' => ['glpi_networkports.mac' => '']],
+            ['NOT' => ['glpi_networkports.mac' => '00:00:00:00:00:00']],
+        ],
+        'ORDER' => 'glpi_networkports.logical_number ASC',
+        'LIMIT' => 1
+    ]);
+
+    if (count($iterator) > 0) {
+        $network = $iterator->current();
+
+        $mac = $network['mac'] ?? '';
+
+        // Double vérification PHP (au cas où d'autres MACs invalides passent)
+        if (!self::isValidMac($mac)) {
+            $mac = '';
+        }
+
+        $network_info['ip']  = $network['ip'] ?? '';
+        $network_info['mac'] = $mac;
+    }
+
+    return $network_info;
+}
+
+/**
+ * Vérifie si une adresse MAC est valide et utilisable
+ */
+private static function isValidMac(string $mac): bool
+{
+    if (empty($mac)) {
+        return false;
+    }
+
+    // MACs invalides connues
+    $invalid_macs = [
+        '00:00:00:00:00:00',
+        'ff:ff:ff:ff:ff:ff',  // broadcast
+        '00-00-00-00-00-00',
+        'FF-FF-FF-FF-FF-FF',
+    ];
+
+    if (in_array(strtolower($mac), array_map('strtolower', $invalid_macs))) {
+        return false;
+    }
+
+    // Vérifier le format MAC valide (XX:XX:XX:XX:XX:XX ou XX-XX-XX-XX-XX-XX)
+    if (!preg_match('/^([0-9A-Fa-f]{2}[:\-]){5}[0-9A-Fa-f]{2}$/', $mac)) {
+        return false;
+    }
+
+    return true;
+}
     private static function getComputerSystemInfo($computer_id)
     {
         global $DB;
@@ -556,8 +660,8 @@ class CronSyncComputer extends CronManager
             // Construction de la requête avec QueryExpression pour les conditions complexes
             $or_condition = new QueryExpression(
                 "(glpi_plugin_watchman_computer_mappings.id IS NULL " .
-                    "OR glpi_computers.date_mod > COALESCE(glpi_plugin_watchman_computer_mappings.last_sync_date, '1970-01-01') " .
-                    "OR (glpi_plugin_watchman_computer_mappings.sync_status = 'error' AND glpi_plugin_watchman_computer_mappings.retry_count < " . self::DEFAULT_MAX_RETRIES . "))"
+                "OR glpi_computers.date_mod > COALESCE(glpi_plugin_watchman_computer_mappings.last_sync_date, '1970-01-01') " .
+                "OR (glpi_plugin_watchman_computer_mappings.sync_status = 'error' AND glpi_plugin_watchman_computer_mappings.retry_count < " . self::DEFAULT_MAX_RETRIES . "))"
             );
 
             $iterator = $DB->request([
@@ -567,6 +671,7 @@ class CronSyncComputer extends CronManager
                     'glpi_plugin_watchman_computer_mappings.last_sync_date',
                     'glpi_plugin_watchman_computer_mappings.sync_status',
                     'glpi_plugin_watchman_computer_mappings.retry_count',
+                    'glpi_plugin_watchman_computer_mappings.is_selected',
                     new QueryExpression("
                         CASE 
                             WHEN glpi_plugin_watchman_computer_mappings.id IS NULL THEN 'new'
@@ -585,11 +690,11 @@ class CronSyncComputer extends CronManager
                         ]
                     ]
                 ],
-                // 'WHERE' => [
-                //     'glpi_computers.is_deleted' => 0,
-                //     'glpi_computers.is_template' => 0,
-                //     $or_condition
-                // ],
+                
+                'WHERE' => [
+                    "glpi_plugin_watchman_computer_mappings.is_selected"=>1,
+                    $or_condition
+                ],
                 'ORDER' => [
                     new QueryExpression("CASE glpi_plugin_watchman_computer_mappings.sync_status WHEN 'error' THEN 1 ELSE 2 END"),
                     'glpi_computers.date_mod DESC'
@@ -672,13 +777,23 @@ class CronSyncComputer extends CronManager
      */
     public static function manualSyncComputers($batch_size = null, $force = false)
     {
+        // echo "\n" . str_repeat("=", 60) . "\n";
+        //var_dump("Syncronisation commence");
+        // echo str_repeat("=", 60) . "\n\n";
 
         if (!$force && !self::canSync()) {
+            // echo "\n" . str_repeat("-", 60) . "\n";
+            //var_dump('Plugin non configuré ou API indisponible');
+            // echo str_repeat("-", 60) . "\n\n";
             return [
                 'success' => false,
                 'message' => __('Plugin non configuré ou API indisponible', 'watchman')
             ];
         }
+
+        // echo "\n" . str_repeat("-", 60) . "\n";
+        //var_dump("Can est oui");
+        // echo str_repeat("-", 60) . "\n\n";
 
         $batch_size = $batch_size ?? self::DEFAULT_BATCH_SIZE;
 
@@ -686,9 +801,14 @@ class CronSyncComputer extends CronManager
             $api_client = new WatchmanApiClient();
             $computers = self::getComputersWithAppsToSync($batch_size);
 
-            if (empty($computers)) {
+            // echo "\n" . str_repeat("-", 60) . "\n";
+            //var_dump("computers");
+            // echo str_repeat("-", 60) . "\n\n";
 
-                
+            if (empty($computers)) {
+                // echo "\n" . str_repeat("-", 60) . "\n";
+                //var_dump("Aucun computers");
+                // echo str_repeat("-", 60) . "\n\n";
 
                 return [
                     'success' => true,
@@ -698,37 +818,55 @@ class CronSyncComputer extends CronManager
                 ];
             }
 
-            // var_dump($computers);
+            // echo "\n" . str_repeat("-", 60) . "\n";
+            //var_dump("prepareAssetsPayload");
+            // echo str_repeat("-", 60) . "\n\n";
 
-            // Préparer le payload au format API
             $assets_payload = self::prepareAssetsPayload($computers);
+
+            // echo "\n" . str_repeat("-", 60) . "\n";
+            //var_dump($assets_payload);
+            // echo str_repeat("-", 60) . "\n\n";
+
             $assets_cleaned = self::cleanAssetsStrict($assets_payload);
+
+            // echo "\n" . str_repeat("-", 60) . "\n";
+            //var_dump("cleanAssetsStrict");
+            // echo str_repeat("-", 60) . "\n\n";
+
+            // echo "\n" . str_repeat("-", 60) . "\n";
+            //var_dump($assets_cleaned);
+            // echo str_repeat("-", 60) . "\n\n";
 
             // Envoyer à l'API
             $response = $api_client->syncAssets($assets_cleaned);
 
+            // echo "\n" . str_repeat("=", 60) . "\n";
+            //var_dump("Api response");
+            // echo str_repeat("=", 60) . "\n\n";
+
+            // echo "\n" . str_repeat("-", 60) . "\n";
+            //var_dump($response);
+            // echo str_repeat("-", 60) . "\n\n";
+
             $processed = 0;
             $errors = 0;
 
-            // var_dump($response);
-
             if ($response['success']) {
-                // var_dump('success');
+                // echo "\n" . str_repeat("-", 60) . "\n";
+                //var_dump('success');
+                // echo str_repeat("-", 60) . "\n\n";
+
                 $processed = count($assets_cleaned['assets']);
-                // Mettre à jour le statut de tous les ordinateurs
                 foreach ($assets_cleaned['assets'] as $asset_cleaned) {
-                    // var_dump($asset_cleaned);
-                    self::updateComputerSyncStatus($asset_cleaned['computer_glpi_id'],'success');
+                    self::updateComputerSyncStatus($asset_cleaned['computer_glpi_id'], 'success');
                 }
             } else {
                 $errors = count($computers);
-                // var_dump('errors');
 
-
-                // Marquer tous comme en erreur
-                // foreach ($computers as $computer_data) {
-                //     self::updateComputerSyncStatus($computer_data['id'], 'error', $response['error'] ?? 'Erreur inconnue');
-                // }
+                // echo "\n" . str_repeat("-", 60) . "\n";
+                //var_dump('errors');
+                // echo str_repeat("-", 60) . "\n\n";
             }
 
             return [

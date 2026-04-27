@@ -82,6 +82,9 @@ switch ($action) {
             }
         }
 
+        $DB->doQuery("DELETE FROM glpi_plugin_watchman_computer_mappings WHERE is_selected = 0");
+
+
         echo json_encode(['success' => true, 'message' => count($selected_ids) . ' machine(s) sélectionnée(s)']);
         break;
 

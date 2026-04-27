@@ -185,7 +185,7 @@ rel="stylesheet" type="text/css" href="{{ base_url }}/plugins/watchman/assets/cs
     </div>
 
     <!-- ═══ MODAL SÉLECTION MACHINES ═══ -->
-<div id="sync_machine_modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%;
+{# <div id="sync_machine_modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%;
      background:rgba(0,0,0,0.5); z-index:9999; align-items:center; justify-content:center;">
     <div style="background:#fff; border-radius:12px; width:700px; max-width:90%; max-height:80vh;
                 display:flex; flex-direction:column; overflow:hidden; box-shadow:0 20px 60px rgba(0,0,0,0.3);">
@@ -243,6 +243,78 @@ rel="stylesheet" type="text/css" href="{{ base_url }}/plugins/watchman/assets/cs
        
         </div>
     </div>
+</div> #}
+
+<div id="machine_modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%;
+     background:rgba(0,0,0,0.5); z-index:9999; align-items:center; justify-content:center;">
+    <div style="background:#fff; border-radius:12px; width:700px; max-width:90%; max-height:80vh;
+                display:flex; flex-direction:column; overflow:hidden; box-shadow:0 20px 60px rgba(0,0,0,0.3);">
+        
+        <!-- Header modal -->
+        <div style="padding:20px 24px; border-bottom:1px solid #e0e0e0; display:flex; justify-content:space-between; align-items:center;">
+            <div style="flex:1;">
+                <h3 style="margin:0; font-size:16px;">Choisir les machines à synchroniser</h3>
+                <p style="margin:4px 0 0 0; font-size:12px; color:#666;">
+                    Sélectionnez les machines GLPI à envoyer vers Watchman
+                </p>
+                <!-- Quota progress bar -->
+                <div id="modal_quota_bar_container" style="display:none; margin-top:10px; max-width:400px;">
+                    <div style="display:flex; justify-content:space-between; font-size:11px; color:#666; margin-bottom:4px;">
+                        <span id="modal_quota_label">0 / 0 machines sélectionnées</span>
+                        <span id="modal_quota_remaining"></span>
+                    </div>
+                    <div style="height:6px; background:#e9ecef; border-radius:3px; overflow:hidden;">
+                        <div id="modal_quota_fill" style="height:100%; width:0%; background:#28a745; border-radius:3px; transition:width .3s, background .3s;"></div>
+                    </div>
+                </div>
+            </div>
+            <button onclick="closeMachineModal()" style="background:none; border:none; font-size:20px; cursor:pointer; color:#666;">✕</button>
+        </div>
+
+        <!-- Barre de recherche + actions -->
+        <div style="padding:16px 24px; border-bottom:1px solid #f0f0f0; display:flex; gap:10px; align-items:center;">
+            <input type="text" id="modal_search" placeholder="Rechercher une machine..."
+                   class="cms_watchman_input" style="flex:1;"
+                   oninput="filterModalTable(this.value)">
+            <button class="cms_watchman_btn cms_watchman_btn-outline btn-sm" onclick="modalSelectAll()">Tout</button>
+            <button class="cms_watchman_btn cms_watchman_btn-outline btn-sm" onclick="modalSelectNone()">Aucun</button>
+            <span id="modal_count" style="font-size:12px; color:#666; white-space:nowrap;"></span>
+        </div>
+
+        <!-- Quota limit banner -->
+        <div id="modal_quota_banner" style="display:none; margin:0 24px 8px; padding:10px 16px;
+             background:#fff3cd; border:1px solid #ffc107; border-radius:6px; font-size:13px; color:#856404;">
+            <i class="fas fa-exclamation-triangle" style="margin-right:6px;"></i>
+            <strong>Limite atteinte</strong> — Désélectionnez d'abord certaines machines pour en ajouter d'autres.
+        </div>
+
+        <!-- Liste des machines -->
+        <div style="overflow-y:auto; flex:1; padding:0 24px;">
+            <table class="cms_watchman_table">
+                <thead>
+                    <tr>
+                        <th width="40px"><input type="checkbox" id="modal_check_all" onchange="modalToggleAll(this)"></th>
+                        <th>Nom</th>
+                        <th>Statut</th>
+                        <th>Dernière sync</th>
+                    </tr>
+                </thead>
+                <tbody id="modal_machines_body">
+                    <tr><td colspan="4" style="text-align:center; padding:30px;">
+                        <span class="cms_watchman_loading"></span>
+                    </td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Footer modal -->
+        <div style="padding:16px 24px; border-top:1px solid #e0e0e0; display:flex; justify-content:flex-end; gap:10px;">
+            <button class="cms_watchman_btn cms_watchman_btn-outline" onclick="closeMachineModal()">Annuler</button>
+            <button class="cms_watchman_btn cms_watchman_btn-success" onclick="saveModalSelection()">
+                <i class="fas fa-save me-1"></i> Sauvegarder la sélection
+            </button>
+        </div>
+    </div>
 </div>
 </div>
 
@@ -252,106 +324,217 @@ rel="stylesheet" type="text/css" href="{{ base_url }}/plugins/watchman/assets/cs
 <script>
 
 // ═══ MODAL SYNCHRONISATION ═══
-let sync_modal_computers = [];
 
+// ═══════════════════════════════════════════
+//  VARIABLES
+// ═══════════════════════════════════════════
+const WATCHMAN_SELECT_URL = '{{ base_url }}/plugins/watchman/ajax/computer_select.php';
+let modal_computers      = [];
+let subscription_quota   = 0;
+
+
+
+// ═══════════════════════════════════════════
+//  CHARGEMENT INITIAL
+// ═══════════════════════════════════════════
 function openSyncModal(computers) {
-    sync_modal_computers = computers || [];
-    document.getElementById('sync_machine_modal').style.display = 'flex';
-    document.getElementById('sync_modal_search').value = '';
-    renderSyncModalTable(sync_modal_computers);
+    modal_computers = computers || [];
+    document.getElementById('machine_modal').style.display = 'flex';
+    document.getElementById('modal_search').value = '';
+    renderSyncModalTable(modal_computers);
 }
 
-function closeSyncModal() {
-    document.getElementById('sync_machine_modal').style.display = 'none';
+// ═══════════════════════════════════════════
+//  MODAL
+// ═══════════════════════════════════════════
+async function openMachineModal() {
+    document.getElementById('machine_modal').style.display = 'flex';
+    document.getElementById('modal_search').value = '';
+
+    const [compResp, subResp] = await Promise.all([
+        fetch(`${WATCHMAN_SELECT_URL}?action=get_all_computers`),
+        fetch(`${WATCHMAN_SELECT_URL}?action=get_subscription`)
+    ]);
+    const compData = await compResp.json();
+    const subData  = await subResp.json();
+
+    subscription_quota = (subData.success && subData.quantity > 0) ? subData.quantity : 0;
+
+    if (compData.success) {
+        modal_computers = compData.computers;
+        renderModalTable(modal_computers);
+    }
 }
 
-// Fermer en cliquant dehors
-document.addEventListener('DOMContentLoaded', () => {
-    document.getElementById('sync_machine_modal').addEventListener('click', function(e) {
-        if (e.target === this) closeSyncModal();
-    });
+function closeMachineModal() {
+    document.getElementById('machine_modal').style.display = 'none';
+}
+
+// Fermer en cliquant hors du modal
+document.getElementById('machine_modal')?.addEventListener('click', function(e) {
+    if (e.target === this) closeMachineModal();
 });
 
-function renderSyncModalTable(computers) {
-    const tbody = document.getElementById('sync_modal_body');
+function renderModalTable(computers) {
+    const tbody = document.getElementById('modal_machines_body');
 
     if (computers.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="3" style="text-align:center; padding:20px; color:#999;">
-            Aucune machine trouvée dans GLPI.<br>
-            <small>Ajoutez des ordinateurs dans Parc → Ordinateurs d'abord.</small>
-        </td></tr>`;
-        updateSyncModalCount();
+        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:20px; color:#999;">Aucune machine trouvée</td></tr>';
+        updateModalCount();
         return;
     }
 
     tbody.innerHTML = computers.map(c => `
         <tr>
-            <td><input type="checkbox" class="sync_modal_checkbox" value="${c.id}"
-                       ${c.is_selected ? 'checked' : ''} onchange="updateSyncModalCount()"></td>
+            <td><input type="checkbox" class="modal_checkbox" value="${c.id}"
+                       ${c.is_selected ? 'checked' : ''} onchange="updateModalCount()"></td>
             <td><strong>${c.name}</strong></td>
             <td><span class="cms_watchman_badge cms_watchman_badge-${c.sync_status === 'success' ? 'success' : 'warning'}">
-                ${c.sync_status === 'success' ? 'Synchronisé' : 'Non synchronisé'}
+                ${c.sync_status === 'success' ? 'Sync' : 'En attente'}
             </span></td>
+            <td style="font-size:12px; color:#666;">
+                ${c.last_sync_date ? new Date(c.last_sync_date).toLocaleDateString('fr-FR') : 'Jamais'}
+            </td>
         </tr>
     `).join('');
 
-    updateSyncModalCount();
+    updateModalCount();
 }
 
-function filterSyncModal(query) {
+function filterModalTable(query) {
     const q = query.toLowerCase();
-    renderSyncModalTable(sync_modal_computers.filter(c => c.name.toLowerCase().includes(q)));
+    renderModalTable(modal_computers.filter(c => c.name.toLowerCase().includes(q)));
 }
 
-function syncModalSelectAll()  { document.querySelectorAll('.sync_modal_checkbox').forEach(c => c.checked = true);  updateSyncModalCount(); }
-function syncModalSelectNone() { document.querySelectorAll('.sync_modal_checkbox').forEach(c => c.checked = false); updateSyncModalCount(); }
-function syncModalToggleAll(master) { document.querySelectorAll('.sync_modal_checkbox').forEach(c => c.checked = master.checked); updateSyncModalCount(); }
+function modalSelectAll()  { document.querySelectorAll('.modal_checkbox').forEach(c => c.checked = true);  updateModalCount(); }
+function modalSelectNone() { document.querySelectorAll('.modal_checkbox').forEach(c => c.checked = false); updateModalCount(); }
+function modalToggleAll(master) { document.querySelectorAll('.modal_checkbox').forEach(c => c.checked = master.checked); updateModalCount(); }
 
-function updateSyncModalCount() {
-    const checked = document.querySelectorAll('.sync_modal_checkbox:checked').length;
-    const total   = document.querySelectorAll('.sync_modal_checkbox').length;
-    document.getElementById('sync_modal_count').textContent = `${checked} / ${total} sélectionnée(s)`;
+function updateModalCount() {
+    const checked = document.querySelectorAll('.modal_checkbox:checked').length;
+    const total   = document.querySelectorAll('.modal_checkbox').length;
+    document.getElementById('modal_count').textContent = `${checked} / ${total} sélectionnée(s)`;
+    updateQuotaBar(checked);
 }
 
-async function confirmSyncSelection() {
-    const selected_ids = [...document.querySelectorAll('.sync_modal_checkbox:checked')].map(c => parseInt(c.value));
+function updateQuotaBar(checked) {
+    const container = document.getElementById('modal_quota_bar_container');
+    const banner    = document.getElementById('modal_quota_banner');
+    if (!container) return;
 
-    if (selected_ids.length === 0) {
-        cms_watchman_show_notification('Veuillez sélectionner au moins une machine', 'warning');
+    if (!subscription_quota) {
+        container.style.display = 'none';
+        if (banner) banner.style.display = 'none';
         return;
     }
 
-    // 1. Sauvegarder la sélection
-    const saveResp = await fetch(
-        `${CMS_WATCHMAN_COMPUTER_CONFIG.baseUrl}/plugins/watchman/ajax/computer_select.php?action=save_selection`,
-        {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ selected_ids })
-        }
-    );
-    const saveData = await saveResp.json();
+    container.style.display = 'block';
 
-    if (!saveData.success) {
-        cms_watchman_show_notification('Erreur lors de la sélection', 'error');
-        return;
+    const pct  = Math.min(100, Math.round((checked / subscription_quota) * 100));
+    const rem  = subscription_quota - checked;
+    const fill = document.getElementById('modal_quota_fill');
+    document.getElementById('modal_quota_label').textContent     = `${checked} / ${subscription_quota} machines sélectionnées`;
+    document.getElementById('modal_quota_remaining').textContent = rem > 0 ? `${rem} restante(s)` : 'Limite atteinte';
+
+    fill.style.width = pct + '%';
+
+    if (pct >= 100) {
+        fill.style.background = '#dc3545';
+        if (banner) banner.style.display = 'block';
+        document.querySelectorAll('.modal_checkbox:not(:checked)').forEach(cb => {
+            cb.disabled = true;
+            cb.title    = 'Limite atteinte — désélectionnez d\'abord certaines machines';
+        });
+    } else {
+        fill.style.background = pct >= 80 ? '#ffc107' : '#28a745';
+        if (banner) banner.style.display = 'none';
+        document.querySelectorAll('.modal_checkbox:not(:checked)').forEach(cb => {
+            cb.disabled = false;
+            cb.title    = '';
+        });
     }
+}
 
-    closeSyncModal();
-    cms_watchman_show_notification(`${selected_ids.length} machine(s) sélectionnée(s) — Lancement de la synchronisation...`, 'success');
+async function saveModalSelection() {
+    const selected_ids = [...document.querySelectorAll('.modal_checkbox:checked')].map(c => parseInt(c.value));
 
-    // 2. Lancer la synchronisation
-    try {
-        const result = await makeRequest('start_computer_sync', null, 'POST', {});
-        if (result.success) {
-            cms_watchman_show_notification(result.message, 'success');
-            setTimeout(() => location.reload(), 2000);
-        } else {
-            cms_watchman_show_notification(result.message || 'Synchronisation lancée', 'info');
-        }
-    } catch(e) {
-        cms_watchman_show_notification('Synchronisation lancée en arrière-plan', 'info');
+    const resp = await fetch(`${WATCHMAN_SELECT_URL}?action=save_selection`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ selected_ids })
+    });
+    const data = await resp.json();
+
+    if (data.success) {
+        closeMachineModal();
+        cms_watchman_load_computer_data();
+        // notification
+        const toast = document.createElement('div');
+        toast.className = 'alert alert-success alert-dismissible fade show position-fixed';
+        toast.style.cssText = 'top:20px; right:20px; z-index:99999; min-width:300px;';
+        toast.innerHTML = `${data.message} <button type="button" class="btn-close" onclick="this.parentNode.remove()"></button>`;
+        document.body.appendChild(toast);
+        setTimeout(() => toast.remove(), 4000);
     }
+}
+
+async function removeMachine(computer_id) {
+    const confirmed = await showRemovalWarning();
+    if (!confirmed) return;
+
+    const resp = await fetch(`${WATCHMAN_SELECT_URL}?action=get_all_computers`);
+    const data = await resp.json();
+    if (!data.success) return;
+
+    const selected_ids = data.computers
+        .filter(c => c.is_selected && c.id !== computer_id)
+        .map(c => c.id);
+
+    const resp2 = await fetch(`${WATCHMAN_SELECT_URL}?action=save_selection`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ selected_ids })
+    });
+
+    const data2 = await resp2.json();
+    if (data2.success) loadSelectedMachines();
+}
+
+function showRemovalWarning() {
+    return new Promise(resolve => {
+        const overlay = document.createElement('div');
+        overlay.style.cssText = 'position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.55); z-index:99999; display:flex; align-items:center; justify-content:center;';
+        overlay.innerHTML = `
+            <div style="background:#fff; border-radius:12px; max-width:480px; width:90%; padding:28px; box-shadow:0 20px 60px rgba(0,0,0,0.3);">
+                <div style="display:flex; align-items:flex-start; gap:14px; margin-bottom:20px;">
+                    <div style="background:#fff3cd; border-radius:50%; width:46px; height:46px; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                        <i class="fas fa-exclamation-triangle" style="color:#e67e22; font-size:18px;"></i>
+                    </div>
+                    <div>
+                        <h4 style="margin:0 0 8px 0; font-size:16px; font-weight:600;">Information de sécurité</h4>
+                        <p style="margin:0; font-size:14px; color:#495057; line-height:1.6;">
+                            Cette action retire la machine de la liste de synchronisation <strong>dans ce plugin uniquement</strong>.
+                            La machine reste présente dans votre dashboard Watchman.
+                        </p>
+                        <p style="margin:10px 0 0 0; font-size:14px; color:#495057; line-height:1.6;">
+                            Pour la supprimer définitivement, connectez-vous sur <strong>votre compte watchman.bj</strong>
+                            et supprimez-la depuis votre dashboard. La suppression directe dans le plugin n'est pas
+                            disponible pour des raisons de sécurité.
+                        </p>
+                    </div>
+                </div>
+                <div style="display:flex; justify-content:flex-end; gap:10px;">
+                    <button id="warn_cancel" class="cms_watchman_btn cms_watchman_btn-outline">Annuler</button>
+                    <button id="warn_confirm" class="cms_watchman_btn" style="background:#dc3545; color:#fff; border-color:#dc3545;">
+                        Retirer du plugin
+                    </button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(overlay);
+        overlay.querySelector('#warn_cancel').onclick  = () => { overlay.remove(); resolve(false); };
+        overlay.querySelector('#warn_confirm').onclick = () => { overlay.remove(); resolve(true); };
+    });
 }
 
 
@@ -640,7 +823,7 @@ async function cms_watchman_start_computer_sync() {
         const selected = computers.filter(c => c.is_selected);
 
         if (selected.length === 0) {
-            openSyncModal(computers);
+            openMachineModal();
         } else {
             const result = await cms_watchman_make_ajax_request('start_computer_sync', {});
 

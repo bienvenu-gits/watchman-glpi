@@ -15,7 +15,7 @@ $computer_manager = new ComputerManager();
 WatchmanProfile::checkRightOr403(WatchmanProfile::RIGHT_WATCHMAN_ADMIN, WatchmanProfile::READ);
 
 $dashboard_manager = new WatchmanManager();
-$computer_manager->startCron();
+
 
 Html::header(
     'Ordinateurs synchronisés',
@@ -24,6 +24,8 @@ Html::header(
     ComputerManager::class,
     "computermapping"
 );
+
+// $computer_manager->startCron();
 
 
 $computer_id = $_GET['computer_id'] ?? null;
