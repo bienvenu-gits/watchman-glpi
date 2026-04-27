@@ -585,11 +585,11 @@ class CronSyncComputer extends CronManager
                         ]
                     ]
                 ],
-                'WHERE' => [
-                    'glpi_computers.is_deleted' => 0,
-                    'glpi_computers.is_template' => 0,
-                    $or_condition
-                ],
+                // 'WHERE' => [
+                //     'glpi_computers.is_deleted' => 0,
+                //     'glpi_computers.is_template' => 0,
+                //     $or_condition
+                // ],
                 'ORDER' => [
                     new QueryExpression("CASE glpi_plugin_watchman_computer_mappings.sync_status WHEN 'error' THEN 1 ELSE 2 END"),
                     'glpi_computers.date_mod DESC'
@@ -687,6 +687,8 @@ class CronSyncComputer extends CronManager
             $computers = self::getComputersWithAppsToSync($batch_size);
 
             if (empty($computers)) {
+
+                
 
                 return [
                     'success' => true,
