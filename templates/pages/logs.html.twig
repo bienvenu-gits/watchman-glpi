@@ -1,0 +1,563 @@
+{% block plugin_styles %}
+<link rel="stylesheet" type="text/css" href="{{ base_url }}/plugins/watchman/assets/css/icons.css">
+<link rel="stylesheet" type="text/css" href="{{ base_url }}/plugins/watchman/assets/css/tailwind.css">
+<link rel="stylesheet" type="text/css" href="{{ base_url }}/plugins/watchman/assets/css/cms_watchman.css">
+<style>
+    .log-badge {
+        display: inline-block;
+        padding: 2px 8px;
+        border-radius: 12px;
+        font-size: 11px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: .4px;
+    }
+    .log-badge.danger  { background:#fde8e8; color:#c0392b; }
+    .log-badge.warning { background:#fef3cd; color:#856404; }
+    .log-badge.success { background:#d4edda; color:#155724; }
+    .log-badge.info    { background:#d1ecf1; color:#0c5460; }
+    .log-badge.secondary { background:#e2e3e5; color:#383d41; }
+
+    .log-tabs { display:flex; gap:4px; border-bottom:2px solid #e9ecef; margin-bottom:16px; }
+    .log-tab {
+        padding: 8px 18px;
+        cursor: pointer;
+        border-radius: 6px 6px 0 0;
+        font-weight: 500;
+        color: #6c757d;
+        border: 1px solid transparent;
+        border-bottom: none;
+        margin-bottom: -2px;
+        transition: all .15s;
+    }
+    .log-tab.active { background:#fff; border-color:#e9ecef; color:#2d6a4f; border-bottom-color:#fff; }
+    .log-tab:hover:not(.active) { background:#f8f9fa; }
+
+    .log-filters {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin-bottom: 14px;
+        align-items: flex-end;
+    }
+    .log-filters select,
+    .log-filters input[type=text],
+    .log-filters input[type=date] {
+        padding: 5px 10px;
+        border: 1px solid #ced4da;
+        border-radius: 6px;
+        font-size: 13px;
+        height: 34px;
+        background: #fff;
+    }
+    .log-filters label { font-size:12px; color:#6c757d; display:block; margin-bottom:3px; }
+
+    .log-table { width:100%; border-collapse:collapse; font-size:13px; }
+    .log-table th {
+        background:#f8f9fa;
+        padding: 8px 10px;
+        text-align: left;
+        border-bottom: 2px solid #dee2e6;
+        font-weight: 600;
+        color: #495057;
+        white-space: nowrap;
+    }
+    .log-table td {
+        padding: 8px 10px;
+        border-bottom: 1px solid #f0f0f0;
+        vertical-align: middle;
+    }
+    .log-table tr:hover td { background:#fafbfc; }
+    .log-table .msg-cell {
+        max-width: 380px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    .log-table .msg-cell:hover { white-space:normal; word-break:break-word; }
+
+    .log-pagination {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 14px;
+        font-size: 13px;
+        color: #6c757d;
+    }
+    .log-pagination .pages { display:flex; gap:4px; }
+    .log-pagination button {
+        padding: 4px 10px;
+        border: 1px solid #ced4da;
+        border-radius: 5px;
+        background: #fff;
+        cursor: pointer;
+        font-size: 13px;
+    }
+    .log-pagination button:disabled { opacity:.4; cursor:default; }
+    .log-pagination button.active { background:#2d6a4f; color:#fff; border-color:#2d6a4f; }
+
+    .btn-resolve {
+        padding: 3px 10px;
+        font-size: 12px;
+        border: 1px solid #27ae60;
+        color: #27ae60;
+        border-radius: 5px;
+        background: transparent;
+        cursor: pointer;
+        white-space: nowrap;
+    }
+    .btn-resolve:hover { background:#27ae60; color:#fff; }
+
+    .purge-section {
+        margin-top: 18px;
+        padding: 14px 18px;
+        background: #fff8f8;
+        border: 1px solid #f5c6cb;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+    }
+    .purge-section label { font-size:13px; color:#495057; }
+    .purge-section select { padding:4px 8px; border:1px solid #ced4da; border-radius:5px; font-size:13px; }
+    .btn-purge {
+        padding: 5px 14px;
+        background: #e74c3c;
+        color: #fff;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 13px;
+    }
+    .btn-purge:hover { background:#c0392b; }
+</style>
+{% endblock %}
+
+<input type="hidden" name="_glpi_csrf_token" value="{{ csrf_token }}">
+
+<div class="plugin-container">
+    {% include '@watchman/components/navbar.html.twig' with {current_page: 'logmanager'} %}
+
+    <div data-layout-mode="light" class="cms_watchman">
+        <div class="cms_watchman_container cms_watchman_page_content">
+            <div class="cms_watchman_card cms_watchman_content_main">
+
+                <div class="cms_watchman_content_main_header">
+                    <h1><i class="fas fa-file-alt me-2"></i>{{ __('Logs', 'watchman') }}</h1>
+                    <button class="cms_watchman_btn cms_watchman_btn-primary btn-sm" onclick="refreshCurrentTab()">
+                        <i class="fas fa-sync me-1"></i>{{ __('Actualiser', 'watchman') }}
+                    </button>
+                </div>
+
+                <!-- Onglets -->
+                <div class="log-tabs">
+                    <div class="log-tab active" id="tab-errors" onclick="switchTab('errors')">
+                        <i class="fas fa-exclamation-triangle me-1"></i>Erreurs API
+                    </div>
+                    <div class="log-tab" id="tab-sync" onclick="switchTab('sync')">
+                        <i class="fas fa-sync-alt me-1"></i>Synchronisation
+                    </div>
+                </div>
+
+                <!-- Panneau Erreurs -->
+                <div id="panel-errors">
+                    <div class="log-filters">
+                        <div>
+                            <label>Sévérité</label>
+                            <select id="err-severity" onchange="loadErrorLogs(1)">
+                                <option value="">Toutes</option>
+                                <option value="critical">Critique</option>
+                                <option value="error">Erreur</option>
+                                <option value="warning">Avertissement</option>
+                                <option value="info">Info</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label>Type</label>
+                            <select id="err-type" onchange="loadErrorLogs(1)">
+                                <option value="">Tous</option>
+                                <option value="api_error">API</option>
+                                <option value="sync_error">Sync</option>
+                                <option value="auth_error">Auth</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label>Statut</label>
+                            <select id="err-resolved" onchange="loadErrorLogs(1)">
+                                <option value="">Tous</option>
+                                <option value="0">Non résolus</option>
+                                <option value="1">Résolus</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label>Recherche</label>
+                            <input type="text" id="err-search" placeholder="Message, code..." oninput="debounce(loadErrorLogs, 400)(1)">
+                        </div>
+                        <div>
+                            <label>Du</label>
+                            <input type="date" id="err-date-from" onchange="loadErrorLogs(1)">
+                        </div>
+                        <div>
+                            <label>Au</label>
+                            <input type="date" id="err-date-to" onchange="loadErrorLogs(1)">
+                        </div>
+                    </div>
+
+                    <div id="err-loading" style="text-align:center;padding:30px;display:none;">
+                        <span class="cms_watchman_loading"></span>
+                    </div>
+
+                    <div id="err-empty" style="display:none;text-align:center;padding:30px;color:#6c757d;">
+                        <i class="fas fa-check-circle" style="font-size:32px;color:#27ae60;"></i>
+                        <p style="margin-top:8px;">Aucune erreur trouvée</p>
+                    </div>
+
+                    <div id="err-table-wrap">
+                        <table class="log-table" id="err-table">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Type</th>
+                                    <th>Code</th>
+                                    <th>Sévérité</th>
+                                    <th>Message</th>
+                                    <th>Statut</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody id="err-tbody"></tbody>
+                        </table>
+                        <div class="log-pagination" id="err-pagination"></div>
+                    </div>
+
+                    <div class="purge-section">
+                        <i class="fas fa-trash-alt" style="color:#e74c3c;"></i>
+                        <label>Purger les erreurs résolues de plus de</label>
+                        <select id="err-purge-days">
+                            <option value="7">7 jours</option>
+                            <option value="30" selected>30 jours</option>
+                            <option value="90">90 jours</option>
+                        </select>
+                        <button class="btn-purge" onclick="purgeLogs('errors')">Purger</button>
+                    </div>
+                </div>
+
+                <!-- Panneau Synchronisation -->
+                <div id="panel-sync" style="display:none;">
+                    <div class="log-filters">
+                        <div>
+                            <label>Statut</label>
+                            <select id="sync-status" onchange="loadSyncLogs(1)">
+                                <option value="">Tous</option>
+                                <option value="success">Succès</option>
+                                <option value="error">Erreur</option>
+                                <option value="pending">En attente</option>
+                                <option value="skipped">Ignoré</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label>Action</label>
+                            <select id="sync-action" onchange="loadSyncLogs(1)">
+                                <option value="">Toutes</option>
+                                <option value="sync_computer">Sync machine</option>
+                                <option value="sync_alert">Sync alerte</option>
+                                <option value="delete">Suppression</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label>Recherche</label>
+                            <input type="text" id="sync-search" placeholder="Message, action..." oninput="debounce(loadSyncLogs, 400)(1)">
+                        </div>
+                        <div>
+                            <label>Du</label>
+                            <input type="date" id="sync-date-from" onchange="loadSyncLogs(1)">
+                        </div>
+                        <div>
+                            <label>Au</label>
+                            <input type="date" id="sync-date-to" onchange="loadSyncLogs(1)">
+                        </div>
+                    </div>
+
+                    <div id="sync-loading" style="text-align:center;padding:30px;display:none;">
+                        <span class="cms_watchman_loading"></span>
+                    </div>
+
+                    <div id="sync-empty" style="display:none;text-align:center;padding:30px;color:#6c757d;">
+                        <i class="fas fa-database" style="font-size:32px;color:#ced4da;"></i>
+                        <p style="margin-top:8px;">Aucun log de synchronisation</p>
+                    </div>
+
+                    <div id="sync-table-wrap">
+                        <table class="log-table" id="sync-table">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Action</th>
+                                    <th>Statut</th>
+                                    <th>Message</th>
+                                    <th>Durée</th>
+                                    <th>Code HTTP</th>
+                                    <th>Batch</th>
+                                </tr>
+                            </thead>
+                            <tbody id="sync-tbody"></tbody>
+                        </table>
+                        <div class="log-pagination" id="sync-pagination"></div>
+                    </div>
+
+                    <div class="purge-section">
+                        <i class="fas fa-trash-alt" style="color:#e74c3c;"></i>
+                        <label>Purger les logs de sync de plus de</label>
+                        <select id="sync-purge-days">
+                            <option value="7">7 jours</option>
+                            <option value="30" selected>30 jours</option>
+                            <option value="90">90 jours</option>
+                        </select>
+                        <button class="btn-purge" onclick="purgeLogs('sync')">Purger</button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+const BASE_URL = {{ base_url | json_encode | raw }};
+const CSRF_TOKEN = document.querySelector('[name="_glpi_csrf_token"]').value;
+const AJAX_URL = BASE_URL + '/plugins/watchman/ajax/logs.php';
+
+let currentTab = 'errors';
+let errPage = 1;
+let syncPage = 1;
+
+/* ── Debounce ── */
+function debounce(fn, delay) {
+    let t;
+    return function(...args) {
+        clearTimeout(t);
+        t = setTimeout(() => fn.apply(this, args), delay);
+    };
+}
+
+/* ── Tabs ── */
+function switchTab(tab) {
+    currentTab = tab;
+    document.getElementById('tab-errors').classList.toggle('active', tab === 'errors');
+    document.getElementById('tab-sync').classList.toggle('active', tab === 'sync');
+    document.getElementById('panel-errors').style.display = tab === 'errors' ? '' : 'none';
+    document.getElementById('panel-sync').style.display   = tab === 'sync'   ? '' : 'none';
+    if (tab === 'errors') loadErrorLogs(1);
+    else loadSyncLogs(1);
+}
+
+function refreshCurrentTab() {
+    if (currentTab === 'errors') loadErrorLogs(errPage);
+    else loadSyncLogs(syncPage);
+}
+
+/* ── Error logs ── */
+function loadErrorLogs(page) {
+    errPage = page || 1;
+    const params = new URLSearchParams({
+        action:      'get_error_logs',
+        page:        errPage,
+        per_page:    25,
+        severity:    document.getElementById('err-severity').value,
+        error_type:  document.getElementById('err-type').value,
+        is_resolved: document.getElementById('err-resolved').value,
+        search:      document.getElementById('err-search').value,
+        date_from:   document.getElementById('err-date-from').value,
+        date_to:     document.getElementById('err-date-to').value,
+    });
+
+    document.getElementById('err-loading').style.display    = '';
+    document.getElementById('err-table-wrap').style.display = 'none';
+    document.getElementById('err-empty').style.display      = 'none';
+
+    fetch(AJAX_URL + '?' + params, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+        .then(r => r.json())
+        .then(res => {
+            document.getElementById('err-loading').style.display = 'none';
+            if (!res.success) { showToast(res.error || 'Erreur', 'danger'); return; }
+
+            if (!res.data.length) {
+                document.getElementById('err-empty').style.display = '';
+                return;
+            }
+
+            document.getElementById('err-table-wrap').style.display = '';
+            const tbody = document.getElementById('err-tbody');
+            tbody.innerHTML = res.data.map(r => `
+                <tr>
+                    <td title="${r.date_creation}">${r.date_relative}</td>
+                    <td>${escHtml(r.error_type || '—')}</td>
+                    <td><code style="font-size:11px;">${escHtml(r.error_code || '—')}</code></td>
+                    <td><span class="log-badge ${r.severity_class}">${escHtml(r.severity)}</span></td>
+                    <td class="msg-cell" title="${escHtml(r.error_message || '')}">${escHtml(r.error_message || '—')}</td>
+                    <td>
+                        ${r.is_resolved
+                            ? '<span class="log-badge success">Résolu</span>'
+                            : '<span class="log-badge danger">Ouvert</span>'}
+                    </td>
+                    <td>
+                        ${!r.is_resolved
+                            ? `<button class="btn-resolve" onclick="resolveError(${r.id}, this)">Résoudre</button>`
+                            : ''}
+                    </td>
+                </tr>
+            `).join('');
+
+            renderPagination('err-pagination', res.pagination, loadErrorLogs);
+        })
+        .catch(() => {
+            document.getElementById('err-loading').style.display = 'none';
+            showToast('Erreur de chargement', 'danger');
+        });
+}
+
+/* ── Sync logs ── */
+function loadSyncLogs(page) {
+    syncPage = page || 1;
+    const params = new URLSearchParams({
+        action:        'get_sync_logs',
+        page:          syncPage,
+        per_page:      25,
+        status:        document.getElementById('sync-status').value,
+        filter_action: document.getElementById('sync-action').value,
+        search:        document.getElementById('sync-search').value,
+        date_from:     document.getElementById('sync-date-from').value,
+        date_to:       document.getElementById('sync-date-to').value,
+    });
+
+    document.getElementById('sync-loading').style.display    = '';
+    document.getElementById('sync-table-wrap').style.display = 'none';
+    document.getElementById('sync-empty').style.display      = 'none';
+
+    fetch(AJAX_URL + '?' + params, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+        .then(r => r.json())
+        .then(res => {
+            document.getElementById('sync-loading').style.display = 'none';
+            if (!res.success) { showToast(res.error || 'Erreur', 'danger'); return; }
+
+            if (!res.data.length) {
+                document.getElementById('sync-empty').style.display = '';
+                return;
+            }
+
+            document.getElementById('sync-table-wrap').style.display = '';
+            const tbody = document.getElementById('sync-tbody');
+            tbody.innerHTML = res.data.map(r => `
+                <tr>
+                    <td title="${r.date_creation}">${r.date_relative}</td>
+                    <td>${escHtml(r.action || '—')}</td>
+                    <td><span class="log-badge ${r.status_class}">${escHtml(r.status)}</span></td>
+                    <td class="msg-cell" title="${escHtml(r.message || '')}">${escHtml(r.message || '—')}</td>
+                    <td>${r.execution_time ? r.execution_time + 's' : '—'}</td>
+                    <td>${r.api_response_code || '—'}</td>
+                    <td><code style="font-size:11px;">${escHtml(r.batch_id || '—')}</code></td>
+                </tr>
+            `).join('');
+
+            renderPagination('sync-pagination', res.pagination, loadSyncLogs);
+        })
+        .catch(() => {
+            document.getElementById('sync-loading').style.display = 'none';
+            showToast('Erreur de chargement', 'danger');
+        });
+}
+
+/* ── Resolve error ── */
+function resolveError(id, btn) {
+    btn.disabled = true;
+    const body = new FormData();
+    body.append('id', id);
+    body.append('_glpi_csrf_token', CSRF_TOKEN);
+
+    fetch(AJAX_URL + '?action=resolve_error', {
+        method: 'POST',
+        body,
+        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+    })
+    .then(r => r.json())
+    .then(res => {
+        if (res.success) {
+            showToast('Erreur marquée comme résolue', 'success');
+            loadErrorLogs(errPage);
+            loadStats();
+        } else {
+            btn.disabled = false;
+            showToast(res.error || 'Erreur', 'danger');
+        }
+    });
+}
+
+/* ── Purge ── */
+function purgeLogs(type) {
+    const days = document.getElementById(type === 'errors' ? 'err-purge-days' : 'sync-purge-days').value;
+    if (!confirm(`Supprimer les logs ${type === 'errors' ? 'erreurs résolues' : 'de sync'} de plus de ${days} jours ?`)) return;
+
+    const body = new FormData();
+    body.append('type', type);
+    body.append('days', days);
+    body.append('_glpi_csrf_token', CSRF_TOKEN);
+
+    fetch(AJAX_URL + '?action=purge_logs', {
+        method: 'POST',
+        body,
+        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+    })
+    .then(r => r.json())
+    .then(res => {
+        if (res.success) {
+            showToast('Logs purgés', 'success');
+            refreshCurrentTab();
+        } else {
+            showToast(res.error || 'Erreur', 'danger');
+        }
+    });
+}
+
+/* ── Pagination ── */
+function renderPagination(containerId, pag, loadFn) {
+    const el = document.getElementById(containerId);
+    if (!pag || pag.total_pages <= 1) { el.innerHTML = ''; return; }
+
+    const info = `Page ${pag.current_page} / ${pag.total_pages} &nbsp;(${pag.total} entrées)`;
+
+    let pages = '';
+    for (let p = Math.max(1, pag.current_page - 2); p <= Math.min(pag.total_pages, pag.current_page + 2); p++) {
+        pages += `<button class="${p === pag.current_page ? 'active' : ''}" onclick="${loadFn.name}(${p})">${p}</button>`;
+    }
+
+    el.innerHTML = `
+        <span>${info}</span>
+        <div class="pages">
+            <button ${!pag.has_prev ? 'disabled' : ''} onclick="${loadFn.name}(${pag.current_page - 1})">‹</button>
+            ${pages}
+            <button ${!pag.has_next ? 'disabled' : ''} onclick="${loadFn.name}(${pag.current_page + 1})">›</button>
+        </div>
+    `;
+}
+
+/* ── Toast ── */
+function showToast(msg, type) {
+    const t = document.createElement('div');
+    t.style.cssText = `position:fixed;bottom:24px;right:24px;z-index:9999;padding:12px 20px;border-radius:8px;
+        font-size:14px;color:#fff;background:${type === 'success' ? '#27ae60' : '#e74c3c'};box-shadow:0 4px 12px rgba(0,0,0,.15);`;
+    t.textContent = msg;
+    document.body.appendChild(t);
+    setTimeout(() => t.remove(), 3000);
+}
+
+function escHtml(str) {
+    if (!str) return '';
+    return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+/* ── Init ── */
+document.addEventListener('DOMContentLoaded', () => {
+    loadErrorLogs(1);
+});
+</script>

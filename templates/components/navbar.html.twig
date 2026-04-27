@@ -24,14 +24,64 @@
 			</ul>
 		</div>
 		<div class="order-1 ml-auto flex items-center md:order-2">
-			<div class="mr-2 lg:mr-0 dropdown relative">
-				<div class="cms_watchman_nav-link{% if current_page == 'watchmanconfig' %} active{% endif %}">
-					<a href="{{ base_url }}/plugins/watchman/front/watchmanconfig.form.php" class="flex w-full items-center border-b border-gray-800 py-2 px-3 font-medium md:border-0 md:p-0">
+			<div class="mr-2 lg:mr-0 dropdown relative" id="settings-dropdown-wrap">
+				<div class="cms_watchman_nav-link{% if current_page == 'watchmanconfig' or current_page == 'logmanager' %} active{% endif %}"
+				     style="cursor:pointer;" onclick="toggleSettingsDropdown(event)">
+					<span class="flex w-full items-center py-2 px-3 font-medium">
 						<i class="fas fa-cog mr-1 text-lg"></i>
 						Paramètres
-					</a>
+						<i class="fas fa-chevron-down ml-1" style="font-size:10px;" id="settings-chevron"></i>
+					</span>
 				</div>
+				<ul id="settings-dropdown-menu" style="
+					display:none;
+					position:absolute;
+					right:0;
+					top:100%;
+					min-width:180px;
+					background:#fff;
+					border:1px solid #e9ecef;
+					border-radius:8px;
+					box-shadow:0 4px 16px rgba(0,0,0,.1);
+					z-index:1000;
+					padding:4px 0;
+					list-style:none;
+					margin:0;
+				">
+					<li>
+						<a href="{{ base_url }}/plugins/watchman/front/watchmanconfig.form.php"
+						   style="display:flex;align-items:center;gap:8px;padding:9px 16px;font-size:13px;color:{% if current_page == 'watchmanconfig' %}#2d6a4f{% else %}#343a40{% endif %};text-decoration:none;font-weight:{% if current_page == 'watchmanconfig' %}600{% else %}400{% endif %};"
+						   onmouseover="this.style.background='#f8f9fa'" onmouseout="this.style.background=''">
+							<i class="fas fa-sliders-h" style="width:14px;color:#6c757d;"></i>
+							Configuration
+						</a>
+					</li>
+					<li style="border-top:1px solid #f0f0f0;">
+						<a href="{{ base_url }}/plugins/watchman/front/logmanager.php"
+						   style="display:flex;align-items:center;gap:8px;padding:9px 16px;font-size:13px;color:{% if current_page == 'logmanager' %}#2d6a4f{% else %}#343a40{% endif %};text-decoration:none;font-weight:{% if current_page == 'logmanager' %}600{% else %}400{% endif %};"
+						   onmouseover="this.style.background='#f8f9fa'" onmouseout="this.style.background=''">
+							<i class="fas fa-file-alt" style="width:14px;color:#6c757d;"></i>
+							Logs
+						</a>
+					</li>
+				</ul>
 			</div>
 		</div>
 	</div>
 </nav>
+<script>
+function toggleSettingsDropdown(e) {
+    e.stopPropagation();
+    var menu    = document.getElementById('settings-dropdown-menu');
+    var chevron = document.getElementById('settings-chevron');
+    var open    = menu.style.display === 'block';
+    menu.style.display = open ? 'none' : 'block';
+    chevron.style.transform = open ? '' : 'rotate(180deg)';
+}
+document.addEventListener('click', function() {
+    var menu    = document.getElementById('settings-dropdown-menu');
+    var chevron = document.getElementById('settings-chevron');
+    if (menu) { menu.style.display = 'none'; }
+    if (chevron) { chevron.style.transform = ''; }
+});
+</script>

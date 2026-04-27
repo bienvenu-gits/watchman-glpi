@@ -60,6 +60,20 @@ class WatchmanManager extends CommonDBTM
         return true;
     }
 
+    function showLogs()
+    {
+        global $CFG_GLPI;
+
+        TemplateRenderer::getInstance()->display('@watchman/pages/logs.html.twig', [
+            'item'       => $this,
+            'base_url'   => $CFG_GLPI["root_doc"],
+            'current_page' => 'logmanager',
+            'csrf_token' => Session::getNewCSRFToken(),
+        ]);
+
+        return true;
+    }
+
     function showComputerMappings($computer_id = null)
     {
         global $CFG_GLPI;
@@ -140,6 +154,16 @@ class WatchmanManager extends CommonDBTM
                 'page'  => '/plugins/watchman/front/computermapping.php',
                 'links' => [
                     'search' => '/plugins/watchman/front/computermapping.php'
+                ]
+            ];
+        }
+
+        if (\GlpiPlugin\Watchman\WatchmanProfile::canAdmin()) {
+            $menu['options']['logs'] = [
+                'title' => __('Logs', 'watchman'),
+                'page'  => '/plugins/watchman/front/logmanager.php',
+                'links' => [
+                    'search' => '/plugins/watchman/front/logmanager.php'
                 ]
             ];
         }

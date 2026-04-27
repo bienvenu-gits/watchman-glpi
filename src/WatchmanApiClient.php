@@ -509,7 +509,7 @@ public function makeFileUploadRequest($endpoint, $filepath, $custom_headers = nu
     }
     
     /**
-     * Logging des erreurs
+     * Logging des erreurs (fichier + base de données)
      */
     private function logError($endpoint, $method, $error, $attempt) {
         $log_entry = sprintf(
@@ -520,8 +520,25 @@ public function makeFileUploadRequest($endpoint, $filepath, $custom_headers = nu
             $attempt,
             $error
         );
-        
+
         Toolbox::logInFile('watchman_api_errors', $log_entry);
+
+        try {
+            global $DB;
+            $severity = ($attempt >= $this->max_retries) ? 'error' : 'warning';
+            $DB->insert('glpi_plugin_watchman_error_logs', [
+                'error_type'        => 'api_error',
+                'error_code'        => $method,
+                'error_message'     => $error,
+                'context'           => json_encode(['endpoint' => $endpoint, 'attempt' => $attempt]),
+                'related_item_type' => 'WatchmanApiClient',
+                'severity'          => $severity,
+                'is_resolved'       => 0,
+                'date_creation'     => date('Y-m-d H:i:s'),
+            ]);
+        } catch (\Exception $e) {
+            Toolbox::logInFile('watchman_api_errors', 'Impossible d\'écrire en DB: ' . $e->getMessage());
+        }
     }
     
     /**

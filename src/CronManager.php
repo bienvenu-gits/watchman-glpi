@@ -185,17 +185,26 @@ class CronManager extends CommonDBTM {
     /**
      * Log une activité de synchronisation
      */
-    protected static function logSyncActivity($item_id, $action, $status, $message = null) {
+    protected static function logSyncActivity($item_id, $action, $status, $message = null, array $extra = []) {
         global $DB;
-        
-        $DB->insert('glpi_plugin_watchman_sync_logs', [
-            'item_id' => $item_id,
-            'action' => $action,
-            'status' => $status,
-            'message' => $message,
-            'date_creation' => date('Y-m-d H:i:s'),
-            'users_id' => Session::getLoginUserID()
-        ]);
+
+        $row = [
+            'item_id'           => $item_id,
+            'itemtype'          => $extra['itemtype']          ?? 'Computer',
+            'action'            => $action,
+            'status'            => $status,
+            'message'           => $message,
+            'execution_time'    => $extra['execution_time']    ?? null,
+            'memory_usage'      => $extra['memory_usage']      ?? null,
+            'api_response_code' => $extra['api_response_code'] ?? null,
+            'api_response_time' => $extra['api_response_time'] ?? null,
+            'batch_id'          => $extra['batch_id']          ?? null,
+            'error_details'     => $extra['error_details']     ?? null,
+            'users_id'          => Session::getLoginUserID(),
+            'date_creation'     => date('Y-m-d H:i:s'),
+        ];
+
+        $DB->insert('glpi_plugin_watchman_sync_logs', $row);
     }
     
     /**

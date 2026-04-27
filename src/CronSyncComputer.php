@@ -118,38 +118,62 @@ class CronSyncComputer extends CronManager
             }
 
             // Envoyer tout le lot à l'API
+            $batch_id = uniqid('batch_', true);
+            $api_start = microtime(true);
+
             try {
                 $response = $api_client->syncAssets($assets_cleaned);
+                $api_duration = round(microtime(true) - $api_start, 3);
 
                 if ($response['success']) {
                     $processed = count($assets_payload['assets']);
                     $task->addVolume($processed);
 
-                    // Mettre à jour le statut de synchronisation pour tous les ordinateurs traités
                     foreach ($assets_cleaned['assets'] as $computer_data) {
                         self::updateComputerSyncStatus($computer_data['computer_glpi_id'], 'success');
                     }
 
                     $task->log(sprintf(__('%d ordinateurs synchronisés avec succès', 'watchman'), $processed));
+
+                    self::logSyncActivity(null, 'sync_computer', 'success',
+                        sprintf('%d ordinateurs synchronisés', $processed),
+                        [
+                            'execution_time'    => $api_duration,
+                            'memory_usage'      => memory_get_peak_usage(true),
+                            'api_response_code' => $response['data']['status_code'] ?? 200,
+                            'batch_id'          => $batch_id,
+                        ]
+                    );
                 } else {
                     $errors = count($computers_to_sync);
                     $task->log(__('Erreur lors de la synchronisation: ', 'watchman') . $response['error']);
 
-                    // Marquer tous comme en erreur
-                    // foreach ($computers_to_sync as $computer_data) {
-                    //     self::updateComputerSyncStatus($computer_data['id'], 'error', $response['error']);
-                    // }
+                    self::logSyncActivity(null, 'sync_computer', 'error',
+                        $response['error'],
+                        [
+                            'execution_time' => $api_duration,
+                            'memory_usage'   => memory_get_peak_usage(true),
+                            'batch_id'       => $batch_id,
+                            'error_details'  => json_encode($response),
+                        ]
+                    );
                 }
             } catch (Exception $e) {
+                $api_duration = round(microtime(true) - $api_start, 3);
                 $errors = count($computers_to_sync);
                 $error_msg = __('Exception lors de la synchronisation: ', 'watchman') . $e->getMessage();
                 $task->log($error_msg);
                 Toolbox::logInFile('watchman_cron_error', $error_msg);
 
-                // Marquer tous comme en erreur
-                // foreach ($computers_to_sync as $computer_data) {
-                //     self::updateComputerSyncStatus($computer_data['id'], 'error', $e->getMessage());
-                // }
+                self::logSyncActivity(null, 'sync_computer', 'error',
+                    $e->getMessage(),
+                    [
+                        'execution_time' => $api_duration,
+                        'memory_usage'   => memory_get_peak_usage(true),
+                        'batch_id'       => $batch_id,
+                        'error_details'  => $e->getTraceAsString(),
+                    ]
+                );
             }
 
             // Statistiques finales
@@ -161,13 +185,18 @@ class CronSyncComputer extends CronManager
                 $duration
             ));
 
-            // Mise à jour des métriques
             self::updateSyncMetrics('computers', $processed, $errors, $duration);
 
             return ($errors > 0 && $processed == 0) ? 0 : 1;
         } catch (Exception $e) {
             $task->log(__('Erreur critique: ', 'watchman') . $e->getMessage());
             Toolbox::logInFile('watchman_cron_critical', $e->getMessage() . "\n" . $e->getTraceAsString());
+
+            self::logSyncActivity(null, 'sync_computer', 'error',
+                'Erreur critique: ' . $e->getMessage(),
+                ['error_details' => $e->getTraceAsString()]
+            );
+
             return 0;
         }
     }
