@@ -155,24 +155,21 @@
 					{{ __('Synchronisation des alertes', 'watchman') }}
 				</label>
 				<div class="d-flex align-items-center gap-3 mt-1">
-					<label class="cms_watchman_toggle" style="display:flex;align-items:center;gap:10px;cursor:pointer;margin:0;">
-						<input type="hidden" name="sync_alerts_enabled" value="0">
-						<input type="checkbox" name="sync_alerts_enabled" value="1"
-							{{ config.sync_alerts_enabled|default('0') == '1' ? 'checked' : '' }}
-							style="display:none;"
-							onchange="this.previousElementSibling.value = this.checked ? '1' : '0'">
+					<div class="cms_watchman_toggle" style="display:flex;align-items:center;gap:10px;cursor:pointer;margin:0;" onclick="toggleSwitch(this)">
+						<input type="hidden" name="sync_alerts_enabled" value="{{ config.sync_alerts_enabled|default('0') }}">
 						<span class="cms_watchman_toggle_track" style="
 							position:relative; display:inline-block; width:44px; height:24px;
 							background:{{ config.sync_alerts_enabled|default('0') == '1' ? '#2d6a4f' : '#ced4da' }};
-							border-radius:12px; transition:background .2s; flex-shrink:0;"
-							onclick="toggleSwitch(this)">
+							border-radius:12px; transition:background .2s; flex-shrink:0;">
 							<span style="position:absolute; top:3px; left:{{ config.sync_alerts_enabled|default('0') == '1' ? '23px' : '3px' }};
 								width:18px; height:18px; background:#fff; border-radius:50%; transition:left .2s;"></span>
 						</span>
-						<span style="font-size:13px; color:#495057;">
+						<span style="font-size:13px; color:#495057;"
+							data-on="{{ __('Activée', 'watchman') }}"
+							data-off="{{ __('Désactivée', 'watchman') }}">
 							{{ config.sync_alerts_enabled|default('0') == '1' ? __('Activée', 'watchman') : __('Désactivée', 'watchman') }}
 						</span>
-					</label>
+					</div>
 				</div>
 				<p style="font-size:12px; color:#6c757d; margin-top:6px;">
 					{{ __('Active la tâche cron de récupération des alertes depuis Watchman', 'watchman') }}
@@ -186,24 +183,21 @@
 					{{ __('Onglet Alertes', 'watchman') }}
 				</label>
 				<div class="d-flex align-items-center gap-3 mt-1">
-					<label class="cms_watchman_toggle" style="display:flex;align-items:center;gap:10px;cursor:pointer;margin:0;">
-						<input type="hidden" name="show_alerts_tab" value="0">
-						<input type="checkbox" name="show_alerts_tab" value="1"
-							{{ config.show_alerts_tab|default('0') == '1' ? 'checked' : '' }}
-							style="display:none;"
-							onchange="this.previousElementSibling.value = this.checked ? '1' : '0'">
+					<div class="cms_watchman_toggle" style="display:flex;align-items:center;gap:10px;cursor:pointer;margin:0;" onclick="toggleSwitch(this)">
+						<input type="hidden" name="show_alerts_tab" value="{{ config.show_alerts_tab|default('0') }}">
 						<span class="cms_watchman_toggle_track" style="
 							position:relative; display:inline-block; width:44px; height:24px;
 							background:{{ config.show_alerts_tab|default('0') == '1' ? '#2d6a4f' : '#ced4da' }};
-							border-radius:12px; transition:background .2s; flex-shrink:0;"
-							onclick="toggleSwitch(this)">
+							border-radius:12px; transition:background .2s; flex-shrink:0;">
 							<span style="position:absolute; top:3px; left:{{ config.show_alerts_tab|default('0') == '1' ? '23px' : '3px' }};
 								width:18px; height:18px; background:#fff; border-radius:50%; transition:left .2s;"></span>
 						</span>
-						<span style="font-size:13px; color:#495057;">
+						<span style="font-size:13px; color:#495057;"
+							data-on="{{ __('Visible', 'watchman') }}"
+							data-off="{{ __('Masqué', 'watchman') }}">
 							{{ config.show_alerts_tab|default('0') == '1' ? __('Visible', 'watchman') : __('Masqué', 'watchman') }}
 						</span>
-					</label>
+					</div>
 				</div>
 				<p style="font-size:12px; color:#6c757d; margin-top:6px;">
 					{{ __('Affiche ou masque l\'onglet Alertes dans la barre de navigation', 'watchman') }}
@@ -217,24 +211,21 @@
 					{{ __('Création de tickets', 'watchman') }}
 				</label>
 				<div class="d-flex align-items-center gap-3 mt-1">
-					<label class="cms_watchman_toggle" style="display:flex;align-items:center;gap:10px;cursor:pointer;margin:0;">
-						<input type="hidden" name="ticket_creation_enabled" value="0">
-						<input type="checkbox" name="ticket_creation_enabled" value="1"
-							{{ config.ticket_creation_enabled|default('0') == '1' ? 'checked' : '' }}
-							style="display:none;"
-							onchange="this.previousElementSibling.value = this.checked ? '1' : '0'">
+					<div class="cms_watchman_toggle" style="display:flex;align-items:center;gap:10px;cursor:pointer;margin:0;" onclick="toggleSwitch(this)">
+						<input type="hidden" name="ticket_creation_enabled" value="{{ config.ticket_creation_enabled|default('0') }}">
 						<span class="cms_watchman_toggle_track" style="
 							position:relative; display:inline-block; width:44px; height:24px;
 							background:{{ config.ticket_creation_enabled|default('0') == '1' ? '#2d6a4f' : '#ced4da' }};
-							border-radius:12px; transition:background .2s; flex-shrink:0;"
-							onclick="toggleSwitch(this)">
+							border-radius:12px; transition:background .2s; flex-shrink:0;">
 							<span style="position:absolute; top:3px; left:{{ config.ticket_creation_enabled|default('0') == '1' ? '23px' : '3px' }};
 								width:18px; height:18px; background:#fff; border-radius:50%; transition:left .2s;"></span>
 						</span>
-						<span style="font-size:13px; color:#495057;">
+						<span style="font-size:13px; color:#495057;"
+							data-on="{{ __('Activée', 'watchman') }}"
+							data-off="{{ __('Désactivée', 'watchman') }}">
 							{{ config.ticket_creation_enabled|default('0') == '1' ? __('Activée', 'watchman') : __('Désactivée', 'watchman') }}
 						</span>
-					</label>
+					</div>
 				</div>
 				<p style="font-size:12px; color:#6c757d; margin-top:6px;">
 					{{ __('Permet de créer des tickets GLPI depuis les alertes Watchman', 'watchman') }}
@@ -252,27 +243,25 @@
 </form>
 
 <script>
-function toggleSwitch(track) {
-    const label  = track.closest('label');
-    const hidden   = label.querySelector('input[type=hidden]');
-    const checkbox = label.querySelector('input[type=checkbox]');
-    const knob     = track.querySelector('span');
-    const text     = label.querySelector('span:last-child');
 
-    const nowOn = !checkbox.checked;
-    checkbox.checked = nowOn;
-    hidden.value = nowOn ? '1' : '0';
+function toggleSwitch(container) {
+    const hidden = container.querySelector('input[type=hidden]');
+    const track  = container.querySelector('.cms_watchman_toggle_track');
+    const knob   = track.querySelector('span');
+    const text   = container.querySelector('span[data-on]');
+
+    const nowOn = hidden.value !== '1';
+
+    hidden.value           = nowOn ? '1' : '0';
     track.style.background = nowOn ? '#2d6a4f' : '#ced4da';
-    knob.style.left = nowOn ? '23px' : '3px';
+    knob.style.left        = nowOn ? '23px' : '3px';
 
-    const labels = {
-        sync_alerts_enabled:     [' Désactivée', ' Activée'],
-        show_alerts_tab:         [' Masqué',     ' Visible'],
-        ticket_creation_enabled: [' Désactivée', ' Activée'],
-    };
-    const name = checkbox.name;
-    if (labels[name]) text.textContent = nowOn ? labels[name][1] : labels[name][0];
+    if (text) text.textContent = nowOn ? text.dataset.on : text.dataset.off;
 }
+
+document.addEventListener('DOMContentLoaded', () => {
+    loadSelectedMachines();
+});
 </script>
 
 

@@ -38,12 +38,17 @@ class WatchmanConfig extends CommonDBTM
         $config = $this->getConfig();
         $redirect_url = $CFG_GLPI['url_base'] . "/plugins/watchman/front/watchmanconfig.form.php?_glpi_csrf_token=" . Session::getNewCSRFToken();
         $params = [
-            'config' => $config,
-            'form_action' => $CFG_GLPI['root_doc'] . "/plugins/watchman/front/watchmanconfig.form.php",
-            'csrf_token' => Session::getNewCSRFToken(),
+            'config'       => $config,
+            'form_action'  => $CFG_GLPI['root_doc'] . "/plugins/watchman/front/watchmanconfig.form.php",
+            'csrf_token'   => Session::getNewCSRFToken(),
             'current_page' => 'watchmanconfig',
             'redirect_url' => urlencode($redirect_url),
-            'base_url' => $CFG_GLPI["root_doc"],
+            'base_url'     => $CFG_GLPI["root_doc"],
+            'features'     => [
+                'show_alerts_tab'         => self::getConfigValue('show_alerts_tab', '0'),
+                'sync_alerts_enabled'     => self::getConfigValue('sync_alerts_enabled', '0'),
+                'ticket_creation_enabled' => self::getConfigValue('ticket_creation_enabled', '0'),
+            ],
         ];
         TemplateRenderer::getInstance()->display('@watchman/pages/config.html.twig', $params);
         return true;

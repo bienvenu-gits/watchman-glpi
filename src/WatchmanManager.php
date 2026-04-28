@@ -52,9 +52,11 @@ class WatchmanManager extends CommonDBTM
             $alert = $alert_manager->getAlertById($alert_id);
             if ($alert) {
                 TemplateRenderer::getInstance()->display('@watchman/pages/alert_detail.html.twig', [
-                    'item'   => $this,
-                    'base_url' => $CFG_GLPI["root_doc"],
-                    'csrf_token' => Session::getNewCSRFToken(),  // if you need CSRF token
+                    'item'         => $this,
+                    'base_url'     => $CFG_GLPI["root_doc"],
+                    'csrf_token'   => Session::getNewCSRFToken(),
+                    'current_page' => 'alertmanager',
+                    'features'     => self::featureConfig(),
                 ]);
                 return true;
             }
@@ -93,10 +95,11 @@ class WatchmanManager extends CommonDBTM
         
         if ($computer_id) {
             TemplateRenderer::getInstance()->display('@watchman/pages/computer_detail.html.twig', [
-                'item'   => $this,
-                'base_url' => $CFG_GLPI["root_doc"],
+                'item'         => $this,
+                'base_url'     => $CFG_GLPI["root_doc"],
                 'current_page' => 'computermapping',
-                'csrf_token' => Session::getNewCSRFToken(),
+                'csrf_token'   => Session::getNewCSRFToken(),
+                'features'     => self::featureConfig(),
             ]);
             return true;
         }
@@ -152,7 +155,8 @@ class WatchmanManager extends CommonDBTM
         ];
 
         // Ajouter des sous-menus selon les droits
-        if (\GlpiPlugin\Watchman\WatchmanProfile::canView()) {
+        if (\GlpiPlugin\Watchman\WatchmanProfile::canView()
+            && WatchmanConfig::getConfigValue('show_alerts_tab', '0') === '1') {
             $menu['options']['alerts'] = [
                 'title' => __('Alertes', 'watchman'),
                 'page'  => '/plugins/watchman/front/alertmanager.php',
